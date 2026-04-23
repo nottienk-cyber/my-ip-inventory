@@ -1,1 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>IP Inventory</title>
+  <style>
+    body { font-family: Arial; text-align: center; }
+    .box { margin: 20px auto; width: 300px; }
+    button { padding: 10px; margin: 5px; }
+  </style>
+</head>
 
+<body>
+
+<div id="login">
+  <h2>Login</h2>
+  <input id="user" placeholder="Username"><br><br>
+  <input id="pass" type="password" placeholder="Password"><br><br>
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="main" style="display:none;">
+  <h2>Company List</h2>
+  <button onclick="show('abc')">ABC</button><br>
+  <button onclick="show('xyz')">XYZ</button>
+</div>
+
+<div id="abc" style="display:none;">
+  <h3>ABC Devices</h3>
+  <p>Fortigate - 192.168.1.1</p>
+  <p>Switch - 192.168.1.2</p>
+  <button onclick="back()">Back</button>
+</div>
+
+<div id="xyz" style="display:none;">
+  <h3>XYZ Devices</h3>
+  <p>AP - 10.0.0.1</p>
+  <button onclick="back()">Back</button>
+</div>
+
+<script>
+function login() {
+  if (user.value == "admin" && pass.value == "1234") {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("main").style.display = "block";
+  } else {
+    alert("Wrong password");
+  }
+}
+
+function show(c) {
+  document.getElementById("main").style.display = "none";
+  document.getElementById(c).style.display = "block";
+}
+
+function back() {
+  document.getElementById("abc").style.display = "none";
+  document.getElementById("xyz").style.display = "none";
+  document.getElementById("main").style.display = "block";
+}
+</script>
+
+</body>
+</html>
