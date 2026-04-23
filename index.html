@@ -4,13 +4,15 @@
   <title>IP Inventory</title>
   <style>
     body { font-family: Arial; text-align: center; }
-    .box { margin: 20px auto; width: 300px; }
+    table { margin: auto; border-collapse: collapse; }
+    td, th { border: 1px solid black; padding: 8px; }
     button { padding: 10px; margin: 5px; }
   </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
 <div id="login">
   <h2>Login</h2>
   <input id="user" placeholder="Username"><br><br>
@@ -18,22 +20,58 @@
   <button onclick="login()">Login</button>
 </div>
 
+<!-- MAIN -->
 <div id="main" style="display:none;">
   <h2>Company List</h2>
   <button onclick="show('abc')">ABC</button><br>
   <button onclick="show('xyz')">XYZ</button>
 </div>
 
+<!-- ABC -->
 <div id="abc" style="display:none;">
   <h3>ABC Devices</h3>
-  <p>Fortigate - 192.168.1.1</p>
-  <p>Switch - 192.168.1.2</p>
+  <table>
+    <tr>
+      <th>Device</th>
+      <th>IP</th>
+      <th>User</th>
+      <th>Password</th>
+    </tr>
+    <tr>
+      <td>Fortigate</td>
+      <td>192.168.1.1</td>
+      <td>admin</td>
+      <td>pass123</td>
+    </tr>
+    <tr>
+      <td>Switch</td>
+      <td>192.168.1.2</td>
+      <td>cisco</td>
+      <td>cisco123</td>
+    </tr>
+  </table>
+  <br>
   <button onclick="back()">Back</button>
 </div>
 
+<!-- XYZ -->
 <div id="xyz" style="display:none;">
   <h3>XYZ Devices</h3>
-  <p>AP - 10.0.0.1</p>
+  <table>
+    <tr>
+      <th>Device</th>
+      <th>IP</th>
+      <th>User</th>
+      <th>Password</th>
+    </tr>
+    <tr>
+      <td>AP</td>
+      <td>10.0.0.1</td>
+      <td>ubnt</td>
+      <td>ubnt123</td>
+    </tr>
+  </table>
+  <br>
   <button onclick="back()">Back</button>
 </div>
 
