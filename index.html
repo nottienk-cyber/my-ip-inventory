@@ -1,101 +1,452 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>IP Inventory</title>
   <style>
-    body { font-family: Arial; text-align: center; }
-    table { margin: auto; border-collapse: collapse; }
-    td, th { border: 1px solid black; padding: 8px; }
-    button { padding: 10px; margin: 5px; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      color: #222;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.08);
+      margin-bottom: 20px;
+    }
+    h1, h2, h3 {
+      margin-top: 0;
+    }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      margin: 6px 0 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-success { background: #16a34a; color: #fff; }
+    .btn-danger  { background: #dc2626; color: #fff; }
+    .btn-secondary { background: #6b7280; color: #fff; }
+    .btn-light { background: #e5e7eb; color: #111827; }
+    .btn-warning { background: #d97706; color: #fff; }
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .col {
+      flex: 1;
+      min-width: 220px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      background: #fff;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f3f4f6;
+    }
+    .hidden { display: none; }
+    .center-box {
+      max-width: 420px;
+      margin: 80px auto;
+    }
+    .company-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      background: #fafafa;
+    }
+    .company-name {
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .muted {
+      color: #666;
+      font-size: 13px;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .error {
+      color: #dc2626;
+      font-size: 14px;
+      margin-top: -6px;
+      margin-bottom: 12px;
+    }
+    .empty {
+      padding: 16px;
+      background: #f9fafb;
+      border: 1px dashed #cbd5e1;
+      border-radius: 10px;
+      color: #475569;
+    }
   </style>
 </head>
-
 <body>
+  <div class="container">
 
-<!-- LOGIN -->
-<div id="login">
-  <h2>Login</h2>
-  <input id="user" placeholder="Username"><br><br>
-  <input id="pass" type="password" placeholder="Password"><br><br>
-  <button onclick="login()">Login</button>
-</div>
+    <!-- LOGIN PAGE -->
+    <div id="loginPage" class="center-box">
+      <div class="card">
+        <h2>Login</h2>
+        <input type="text" id="loginUser" placeholder="Username" />
+        <input type="password" id="loginPass" placeholder="Password" />
+        <div id="loginError" class="error hidden">Username หรือ Password ไม่ถูกต้อง</div>
+        <button class="btn-primary" onclick="login()">Login</button>
+        <p class="muted">ค่าเริ่มต้น: admin / 1234</p>
+      </div>
+    </div>
 
-<!-- MAIN -->
-<div id="main" style="display:none;">
-  <h2>Company List</h2>
-  <button onclick="show('abc')">ABC</button><br>
-  <button onclick="show('xyz')">XYZ</button>
-</div>
+    <!-- COMPANY PAGE -->
+    <div id="companyPage" class="hidden">
+      <div class="card">
+        <div class="topbar">
+          <div>
+            <h1>Company List</h1>
+            <div class="muted">เพิ่ม / ลบบริษัท แล้วกด Save</div>
+          </div>
+          <div>
+            <button class="btn-secondary" onclick="logout()">Logout</button>
+          </div>
+        </div>
 
-<!-- ABC -->
-<div id="abc" style="display:none;">
-  <h3>ABC Devices</h3>
-  <table>
-    <tr>
-      <th>Device</th>
-      <th>IP</th>
-      <th>User</th>
-      <th>Password</th>
-    </tr>
-    <tr>
-      <td>Fortigate</td>
-      <td>192.168.1.1</td>
-      <td>admin</td>
-      <td>pass123</td>
-    </tr>
-    <tr>
-      <td>Switch</td>
-      <td>192.168.1.2</td>
-      <td>cisco</td>
-      <td>cisco123</td>
-    </tr>
-  </table>
-  <br>
-  <button onclick="back()">Back</button>
-</div>
+        <div class="row">
+          <div class="col">
+            <input type="text" id="companyNameInput" placeholder="ชื่อบริษัท" />
+          </div>
+          <div>
+            <button class="btn-primary" onclick="addCompany()">Add Company</button>
+            <button class="btn-success" onclick="saveCompanies()">Save Companies</button>
+          </div>
+        </div>
 
-<!-- XYZ -->
-<div id="xyz" style="display:none;">
-  <h3>XYZ Devices</h3>
-  <table>
-    <tr>
-      <th>Device</th>
-      <th>IP</th>
-      <th>User</th>
-      <th>Password</th>
-    </tr>
-    <tr>
-      <td>AP</td>
-      <td>10.0.0.1</td>
-      <td>ubnt</td>
-      <td>ubnt123</td>
-    </tr>
-  </table>
-  <br>
-  <button onclick="back()">Back</button>
-</div>
+        <div id="companyList"></div>
+      </div>
+    </div>
 
-<script>
-function login() {
-  if (user.value == "admin" && pass.value == "1234") {
-    document.getElementById("login").style.display = "none";
-    document.getElementById("main").style.display = "block";
-  } else {
-    alert("Wrong password");
-  }
-}
+    <!-- DEVICE PAGE -->
+    <div id="devicePage" class="hidden">
+      <div class="card">
+        <div class="topbar">
+          <div>
+            <h2 id="devicePageTitle">Devices</h2>
+            <div class="muted">เพิ่ม / ลบอุปกรณ์ แล้วกด Save</div>
+          </div>
+          <div>
+            <button class="btn-light" onclick="backToCompanies()">Back</button>
+            <button class="btn-secondary" onclick="logout()">Logout</button>
+          </div>
+        </div>
 
-function show(c) {
-  document.getElementById("main").style.display = "none";
-  document.getElementById(c).style.display = "block";
-}
+        <div class="row">
+          <div class="col">
+            <input type="text" id="deviceNameInput" placeholder="Device Name" />
+          </div>
+          <div class="col">
+            <input type="text" id="deviceIpInput" placeholder="IP Address" />
+          </div>
+          <div class="col">
+            <input type="text" id="deviceUserInput" placeholder="Username" />
+          </div>
+          <div class="col">
+            <input type="text" id="devicePassInput" placeholder="Password" />
+          </div>
+        </div>
 
-function back() {
-  document.getElementById("abc").style.display = "none";
-  document.getElementById("xyz").style.display = "none";
-  document.getElementById("main").style.display = "block";
-}
-</script>
+        <div id="deviceError" class="error hidden">กรอก Device / IP / Username / Password ให้ครบก่อน</div>
 
+        <button class="btn-primary" onclick="addDevice()">Add Device</button>
+        <button class="btn-success" onclick="saveDevices()">Save Devices</button>
+
+        <div id="deviceTableWrap"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const APP_LOGIN_USER = "admin";
+    const APP_LOGIN_PASS = "1234";
+
+    let companies = [];
+    let selectedCompanyId = null;
+
+    function uid() {
+      return Date.now().toString() + Math.floor(Math.random() * 1000).toString();
+    }
+
+    function loadData() {
+      const data = localStorage.getItem("ip_inventory_data");
+      if (data) {
+        companies = JSON.parse(data);
+      } else {
+        companies = [
+          {
+            id: uid(),
+            name: "ABC Co.,Ltd.",
+            devices: [
+              { id: uid(), name: "FortiGate", ip: "192.168.1.1", user: "admin", pass: "pass123" },
+              { id: uid(), name: "Switch", ip: "192.168.1.2", user: "cisco", pass: "cisco123" }
+            ]
+          },
+          {
+            id: uid(),
+            name: "XYZ Co.,Ltd.",
+            devices: [
+              { id: uid(), name: "Access Point", ip: "10.0.0.1", user: "ubnt", pass: "ubnt123" }
+            ]
+          }
+        ];
+        persist();
+      }
+    }
+
+    function persist() {
+      localStorage.setItem("ip_inventory_data", JSON.stringify(companies));
+    }
+
+    function login() {
+      const u = document.getElementById("loginUser").value.trim();
+      const p = document.getElementById("loginPass").value.trim();
+      const err = document.getElementById("loginError");
+
+      if (u === APP_LOGIN_USER && p === APP_LOGIN_PASS) {
+        sessionStorage.setItem("ip_inventory_logged_in", "1");
+        err.classList.add("hidden");
+        showCompanyPage();
+      } else {
+        err.classList.remove("hidden");
+      }
+    }
+
+    function logout() {
+      sessionStorage.removeItem("ip_inventory_logged_in");
+      selectedCompanyId = null;
+      document.getElementById("loginUser").value = "";
+      document.getElementById("loginPass").value = "";
+      showLoginPage();
+    }
+
+    function isLoggedIn() {
+      return sessionStorage.getItem("ip_inventory_logged_in") === "1";
+    }
+
+    function showLoginPage() {
+      document.getElementById("loginPage").classList.remove("hidden");
+      document.getElementById("companyPage").classList.add("hidden");
+      document.getElementById("devicePage").classList.add("hidden");
+    }
+
+    function showCompanyPage() {
+      document.getElementById("loginPage").classList.add("hidden");
+      document.getElementById("companyPage").classList.remove("hidden");
+      document.getElementById("devicePage").classList.add("hidden");
+      renderCompanies();
+    }
+
+    function showDevicePage(companyId) {
+      selectedCompanyId = companyId;
+      const company = companies.find(c => c.id === companyId);
+      document.getElementById("devicePageTitle").innerText = "Devices - " + company.name;
+      document.getElementById("loginPage").classList.add("hidden");
+      document.getElementById("companyPage").classList.add("hidden");
+      document.getElementById("devicePage").classList.remove("hidden");
+      document.getElementById("deviceError").classList.add("hidden");
+      clearDeviceInputs();
+      renderDevices();
+    }
+
+    function addCompany() {
+      const input = document.getElementById("companyNameInput");
+      const name = input.value.trim();
+      if (!name) return;
+
+      companies.push({
+        id: uid(),
+        name: name,
+        devices: []
+      });
+
+      input.value = "";
+      renderCompanies();
+    }
+
+    function deleteCompany(companyId) {
+      if (!confirm("ลบบริษัทนี้ใช่ไหม?")) return;
+      companies = companies.filter(c => c.id !== companyId);
+      renderCompanies();
+    }
+
+    function saveCompanies() {
+      persist();
+      alert("บันทึกบริษัทเรียบร้อย");
+    }
+
+    function renderCompanies() {
+      const wrap = document.getElementById("companyList");
+
+      if (companies.length === 0) {
+        wrap.innerHTML = '<div class="empty">ยังไม่มีบริษัท</div>';
+        return;
+      }
+
+      wrap.innerHTML = companies.map(company => `
+        <div class="company-item">
+          <div>
+            <div class="company-name">${escapeHtml(company.name)}</div>
+            <div class="muted">Devices: ${company.devices.length}</div>
+          </div>
+          <div>
+            <button class="btn-warning" onclick="showDevicePage('${company.id}')">Open</button>
+            <button class="btn-danger" onclick="deleteCompany('${company.id}')">Delete</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function backToCompanies() {
+      showCompanyPage();
+    }
+
+    function addDevice() {
+      const name = document.getElementById("deviceNameInput").value.trim();
+      const ip = document.getElementById("deviceIpInput").value.trim();
+      const user = document.getElementById("deviceUserInput").value.trim();
+      const pass = document.getElementById("devicePassInput").value.trim();
+      const err = document.getElementById("deviceError");
+
+      if (!name || !ip || !user || !pass) {
+        err.classList.remove("hidden");
+        return;
+      }
+
+      err.classList.add("hidden");
+
+      const company = companies.find(c => c.id === selectedCompanyId);
+      if (!company) return;
+
+      company.devices.push({
+        id: uid(),
+        name,
+        ip,
+        user,
+        pass
+      });
+
+      clearDeviceInputs();
+      renderDevices();
+    }
+
+    function clearDeviceInputs() {
+      document.getElementById("deviceNameInput").value = "";
+      document.getElementById("deviceIpInput").value = "";
+      document.getElementById("deviceUserInput").value = "";
+      document.getElementById("devicePassInput").value = "";
+    }
+
+    function deleteDevice(deviceId) {
+      if (!confirm("ลบอุปกรณ์นี้ใช่ไหม?")) return;
+      const company = companies.find(c => c.id === selectedCompanyId);
+      if (!company) return;
+      company.devices = company.devices.filter(d => d.id !== deviceId);
+      renderDevices();
+    }
+
+    function saveDevices() {
+      persist();
+      alert("บันทึกอุปกรณ์เรียบร้อย");
+    }
+
+    function renderDevices() {
+      const wrap = document.getElementById("deviceTableWrap");
+      const company = companies.find(c => c.id === selectedCompanyId);
+      if (!company) return;
+
+      if (company.devices.length === 0) {
+        wrap.innerHTML = '<div class="empty">ยังไม่มีอุปกรณ์ในบริษัทนี้</div>';
+        return;
+      }
+
+      wrap.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>IP</th>
+              <th>Username</th>
+              <th>Password</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${company.devices.map(device => `
+              <tr>
+                <td>${escapeHtml(device.name)}</td>
+                <td>${escapeHtml(device.ip)}</td>
+                <td>${escapeHtml(device.user)}</td>
+                <td>${escapeHtml(device.pass)}</td>
+                <td>
+                  <button class="btn-danger" onclick="deleteDevice('${device.id}')">Delete</button>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    loadData();
+
+    if (isLoggedIn()) {
+      showCompanyPage();
+    } else {
+      showLoginPage();
+    }
+  </script>
 </body>
 </html>
