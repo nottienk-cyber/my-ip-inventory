@@ -153,6 +153,12 @@
     #toast.error-toast {
       background: #dc2626;
     }
+
+    .table-input {
+      width: 100%;
+      margin: 0;
+      padding: 8px 10px;
+    }
   </style>
 </head>
 
@@ -549,13 +555,13 @@
           </thead>
           <tbody>
             ${company.devices.map(device => `
-              <tr>
+              <tr id="row-${device.id}">
                 <td>${escapeHtml(device.name || "")}</td>
                 <td>${escapeHtml(device.ip || "")}</td>
                 <td>${escapeHtml(device.user || "")}</td>
                 <td>${escapeHtml(device.pass || "")}</td>
                 <td>
-                  <button class="btn-warning" onclick="editDevice('${device.id}')">Edit</button>
+                  <button class="btn-warning" onclick="editDeviceInline('${device.id}')">Edit</button>
                   <button class="btn-danger" onclick="deleteDevice('${device.id}')">Delete</button>
                 </td>
               </tr>
@@ -565,23 +571,71 @@
       `;
     }
 
-    function editDevice(deviceId) {
+    function editDeviceInline(deviceId) {
       const company = companies.find(c => c.id === selectedCompanyId);
       if (!company) return;
 
       const device = company.devices.find(d => d.id === deviceId);
       if (!device) return;
 
-      document.getElementById("deviceNameInput").value = device.name || "";
-      document.getElementById("deviceIpInput").value = device.ip || "";
-      document.getElementById("deviceUserInput").value = device.user || "";
-      document.getElementById("devicePassInput").value = device.pass || "";
+      const row = document.getElementById("row-" + deviceId);
 
-      const btn = document.getElementById("addDeviceBtn");
-      btn.innerText = "Update Device";
-      btn.onclick = function() {
-        updateDevice(deviceId);
-      };
+      row.innerHTML = `
+        <td>
+          <input class="table-input" type="text" id="editName-${deviceId}" value="${escapeAttr(device.name || "")}" />
+        </td>
+        <td>
+          <input class="table-input" type="text" id="editIp-${deviceId}" value="${escapeAttr(device.ip || "")}" />
+        </td>
+        <td>
+          <input class="table-input" type="text" id="editUser-${deviceId}" value="${escapeAttr(device.user || "")}" />
+        </td>
+        <td>
+          <input class="table-input" type="text" id="editPass-${deviceId}" value="${escapeAttr(device.pass || "")}" />
+        </td>
+        <td>
+          <button class="btn-success" onclick="saveDeviceInline('${deviceId}')">Save</button>
+          <button class="btn-light" onclick="renderDevices()">Cancel</button>
+        </td>
+      `;
+
+      document.getElementById("editName-" + deviceId).focus();
+    }
+
+    async function saveDeviceInline(deviceId) {
+      const name = document.getElementById("editName-" + deviceId).value.trim();
+      const ip = document.getElementById("editIp-" + deviceId).value.trim();
+      const user = document.getElementById("editUser-" + deviceId).value.trim();
+      const pass = document.getElementById("editPass-" + deviceId).value.trim();
+
+      if (!name) {
+        showToast("กรอก Device Name ก่อน ❌", "error");
+        return;
+      }
+
+      const { error } = await db
+        .from("devices")
+        .update({
+          name: name,
+          ip: ip,
+          username: user,
+          password: pass
+        })
+        .eq("id", deviceId);
+
+      if (error) {
+        console.error(error);
+        showToast("แก้ไขอุปกรณ์ไม่สำเร็จ ❌", "error");
+        return;
+      }
+
+      await loadData();
+      renderDevices();
+      showToast("แก้ไขอุปกรณ์เรียบร้อย ✅");
+    }
+
+    function editDevice(deviceId) {
+      editDeviceInline(deviceId);
     }
 
     async function updateDevice(deviceId) {
@@ -781,6 +835,14 @@
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+    }
+
+    function escapeAttr(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
     }
 
     async function init() {
