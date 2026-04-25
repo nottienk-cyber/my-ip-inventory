@@ -24,9 +24,7 @@
       box-shadow: 0 2px 10px rgba(0,0,0,.08);
       margin-bottom: 20px;
     }
-    h1, h2, h3 {
-      margin-top: 0;
-    }
+    h1, h2, h3 { margin-top: 0; }
     input {
       width: 100%;
       padding: 10px 12px;
@@ -48,6 +46,7 @@
     .btn-secondary { background: #6b7280; color: #fff; }
     .btn-light { background: #e5e7eb; color: #111827; }
     .btn-warning { background: #d97706; color: #fff; }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -60,14 +59,15 @@
       text-align: left;
       vertical-align: top;
     }
-    th {
-      background: #f3f4f6;
-    }
+    th { background: #f3f4f6; }
+
     .hidden { display: none; }
+
     .center-box {
       max-width: 420px;
       margin: 80px auto;
     }
+
     .company-item {
       display: flex;
       align-items: center;
@@ -79,14 +79,17 @@
       margin-bottom: 10px;
       background: #fafafa;
     }
+
     .company-name {
       font-weight: bold;
       font-size: 16px;
     }
+
     .muted {
       color: #666;
       font-size: 13px;
     }
+
     .topbar {
       display: flex;
       justify-content: space-between;
@@ -94,12 +97,14 @@
       gap: 12px;
       flex-wrap: wrap;
     }
+
     .error {
       color: #dc2626;
       font-size: 14px;
       margin-top: -6px;
       margin-bottom: 12px;
     }
+
     .empty {
       padding: 16px;
       background: #f9fafb;
@@ -111,6 +116,7 @@
 </head>
 <body>
   <div class="container">
+
     <!-- LOGIN PAGE -->
     <div id="loginPage" class="center-box">
       <div class="card">
@@ -135,20 +141,24 @@
           </div>
         </div>
 
-        <!-- Search Box with Button -->
-        <div class="row">
-          <div class="col">
-            <input type="text" id="searchInput" placeholder="ค้นหาบริษัท..." />
-          </div>
-          <div>
-            <button class="btn-primary" onclick="searchCompanies()">ค้นหา</button>
-            <button class="btn-primary" onclick="addCompany()">Add Company</button>
-            <button class="btn-success" onclick="saveCompanies()">Save Companies</button>
-          </div>
-        </div>
+        <input type="text" id="searchInput" placeholder="ค้นหาบริษัท..." onkeyup="renderCompanies()" />
+
+        <button class="btn-primary" onclick="renderCompanies()">ค้นหา</button>
+        <button class="btn-primary" onclick="showAddCompanyPage()">Add Company</button>
+        <button class="btn-success" onclick="saveCompanies()">Save Companies</button>
 
         <div id="companyList"></div>
         <div id="noResults" class="empty hidden">ไม่พบข้อมูลที่ค้นหา</div>
+      </div>
+    </div>
+
+    <!-- ADD COMPANY PAGE -->
+    <div id="addCompanyPage" class="hidden">
+      <div class="card center-box">
+        <h2>Add Company</h2>
+        <input type="text" id="companyNameInput" placeholder="Company Name" />
+        <button class="btn-success" onclick="confirmAddCompany()">OK</button>
+        <button class="btn-light" onclick="showCompanyPage()">Cancel</button>
       </div>
     </div>
 
@@ -166,24 +176,14 @@
           </div>
         </div>
 
-        <div class="row">
-          <div class="col">
-            <input type="text" id="deviceNameInput" placeholder="Device Name" />
-          </div>
-          <div class="col">
-            <input type="text" id="deviceIpInput" placeholder="IP Address" />
-          </div>
-          <div class="col">
-            <input type="text" id="deviceUserInput" placeholder="Username" />
-          </div>
-          <div class="col">
-            <input type="text" id="devicePassInput" placeholder="Password" />
-          </div>
-        </div>
+        <input type="text" id="deviceNameInput" placeholder="Device Name" />
+        <input type="text" id="deviceIpInput" placeholder="IP Address" />
+        <input type="text" id="deviceUserInput" placeholder="Username" />
+        <input type="text" id="devicePassInput" placeholder="Password" />
 
         <div id="deviceError" class="error hidden">กรอก Device / IP / Username / Password ให้ครบก่อน</div>
 
-        <button class="btn-primary" onclick="addDevice()">Add Device</button>
+        <button id="addDeviceBtn" class="btn-primary" onclick="addDevice()">Add Device</button>
         <button class="btn-success" onclick="saveDevices()">Save Devices</button>
 
         <div id="deviceTableWrap"></div>
@@ -198,7 +198,6 @@
 
     let companies = [];
     let selectedCompanyId = null;
-    let editingDeviceId = null;
 
     function uid() {
       return Date.now().toString() + Math.floor(Math.random() * 1000).toString();
@@ -206,6 +205,7 @@
 
     function loadData() {
       const data = localStorage.getItem("ip_inventory_data");
+
       if (data) {
         companies = JSON.parse(data);
       } else {
@@ -215,7 +215,8 @@
             name: "ABC Co.,Ltd.",
             devices: [
               { id: uid(), name: "FortiGate", ip: "192.168.1.1", user: "admin", pass: "pass123" },
-              { id: uid(), name: "Switch", ip: "192.168.1.2", user: "cisco", pass: "cisco123" }
+              { id: uid(), name: "Switch", ip: "192.168.1.2", user: "cisco", pass: "cisco123" },
+              { id: uid(), name: "AP", ip: "192.168.1.3", user: "admin", pass: "admin123" }
             ]
           },
           {
@@ -260,35 +261,39 @@
       return sessionStorage.getItem("ip_inventory_logged_in") === "1";
     }
 
-    function showLoginPage() {
-      document.getElementById("loginPage").classList.remove("hidden");
+    function hideAllPages() {
+      document.getElementById("loginPage").classList.add("hidden");
       document.getElementById("companyPage").classList.add("hidden");
+      document.getElementById("addCompanyPage").classList.add("hidden");
       document.getElementById("devicePage").classList.add("hidden");
+    }
+
+    function showLoginPage() {
+      hideAllPages();
+      document.getElementById("loginPage").classList.remove("hidden");
     }
 
     function showCompanyPage() {
-      document.getElementById("loginPage").classList.add("hidden");
+      hideAllPages();
       document.getElementById("companyPage").classList.remove("hidden");
-      document.getElementById("devicePage").classList.add("hidden");
       renderCompanies();
     }
 
-    function showDevicePage(companyId) {
-      selectedCompanyId = companyId;
-      const company = companies.find(c => c.id === companyId);
-      document.getElementById("devicePageTitle").innerText = "Devices - " + company.name;
-      document.getElementById("loginPage").classList.add("hidden");
-      document.getElementById("companyPage").classList.add("hidden");
-      document.getElementById("devicePage").classList.remove("hidden");
-      document.getElementById("deviceError").classList.add("hidden");
-      clearDeviceInputs();
-      renderDevices();
+    function showAddCompanyPage() {
+      hideAllPages();
+      document.getElementById("addCompanyPage").classList.remove("hidden");
+      document.getElementById("companyNameInput").value = "";
+      document.getElementById("companyNameInput").focus();
     }
 
-    function addCompany() {
+    function confirmAddCompany() {
       const input = document.getElementById("companyNameInput");
       const name = input.value.trim();
-      if (!name) return;
+
+      if (!name) {
+        alert("กรุณากรอกชื่อบริษัท");
+        return;
+      }
 
       companies.push({
         id: uid(),
@@ -296,13 +301,15 @@
         devices: []
       });
 
-      input.value = "";
-      renderCompanies();
+      persist();
+      showCompanyPage();
     }
 
     function deleteCompany(companyId) {
       if (!confirm("ลบบริษัทนี้ใช่ไหม?")) return;
+
       companies = companies.filter(c => c.id !== companyId);
+      persist();
       renderCompanies();
     }
 
@@ -315,17 +322,17 @@
       const wrap = document.getElementById("companyList");
       const query = document.getElementById("searchInput").value.toLowerCase();
 
-      const filteredCompanies = companies.filter(company => {
-        return company.name.toLowerCase().includes(query);
-      });
+      const filteredCompanies = companies.filter(company =>
+        company.name.toLowerCase().includes(query)
+      );
 
       if (filteredCompanies.length === 0) {
         document.getElementById("noResults").classList.remove("hidden");
         wrap.innerHTML = "";
         return;
-      } else {
-        document.getElementById("noResults").classList.add("hidden");
       }
+
+      document.getElementById("noResults").classList.add("hidden");
 
       wrap.innerHTML = filteredCompanies.map(company => `
         <div class="company-item">
@@ -339,6 +346,22 @@
           </div>
         </div>
       `).join("");
+    }
+
+    function showDevicePage(companyId) {
+      selectedCompanyId = companyId;
+      const company = companies.find(c => c.id === companyId);
+
+      if (!company) return;
+
+      hideAllPages();
+      document.getElementById("devicePage").classList.remove("hidden");
+      document.getElementById("devicePageTitle").innerText = "Devices - " + company.name;
+      document.getElementById("deviceError").classList.add("hidden");
+
+      resetDeviceButton();
+      clearDeviceInputs();
+      renderDevices();
     }
 
     function backToCompanies() {
@@ -370,6 +393,7 @@
         pass
       });
 
+      persist();
       clearDeviceInputs();
       renderDevices();
     }
@@ -383,9 +407,13 @@
 
     function deleteDevice(deviceId) {
       if (!confirm("ลบอุปกรณ์นี้ใช่ไหม?")) return;
+
       const company = companies.find(c => c.id === selectedCompanyId);
       if (!company) return;
+
       company.devices = company.devices.filter(d => d.id !== deviceId);
+
+      persist();
       renderDevices();
     }
 
@@ -397,6 +425,7 @@
     function renderDevices() {
       const wrap = document.getElementById("deviceTableWrap");
       const company = companies.find(c => c.id === selectedCompanyId);
+
       if (!company) return;
 
       if (company.devices.length === 0) {
@@ -435,19 +464,21 @@
 
     function editDevice(deviceId) {
       const company = companies.find(c => c.id === selectedCompanyId);
+      if (!company) return;
+
       const device = company.devices.find(d => d.id === deviceId);
+      if (!device) return;
 
-      if (device) {
-        document.getElementById("deviceNameInput").value = device.name;
-        document.getElementById("deviceIpInput").value = device.ip;
-        document.getElementById("deviceUserInput").value = device.user;
-        document.getElementById("devicePassInput").value = device.pass;
+      document.getElementById("deviceNameInput").value = device.name;
+      document.getElementById("deviceIpInput").value = device.ip;
+      document.getElementById("deviceUserInput").value = device.user;
+      document.getElementById("devicePassInput").value = device.pass;
 
-        document.getElementById("addDeviceBtn").innerText = "Update Device";
-        document.getElementById("addDeviceBtn").onclick = function() {
-          updateDevice(deviceId);
-        };
-      }
+      const btn = document.getElementById("addDeviceBtn");
+      btn.innerText = "Update Device";
+      btn.onclick = function() {
+        updateDevice(deviceId);
+      };
     }
 
     function updateDevice(deviceId) {
@@ -468,15 +499,23 @@
       if (!company) return;
 
       const device = company.devices.find(d => d.id === deviceId);
-      if (device) {
-        device.name = name;
-        device.ip = ip;
-        device.user = user;
-        device.pass = pass;
-      }
+      if (!device) return;
 
+      device.name = name;
+      device.ip = ip;
+      device.user = user;
+      device.pass = pass;
+
+      persist();
       clearDeviceInputs();
+      resetDeviceButton();
       renderDevices();
+    }
+
+    function resetDeviceButton() {
+      const btn = document.getElementById("addDeviceBtn");
+      btn.innerText = "Add Device";
+      btn.onclick = addDevice;
     }
 
     function escapeHtml(str) {
@@ -486,13 +525,6 @@
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
-    }
-
-    // ฟังก์ชันค้นหาบริษัท
-    function searchCompanies() {
-      const query = document.getElementById("searchInput").value.toLowerCase();
-      const filteredCompanies = companies.filter(company => company.name.toLowerCase().includes(query));
-      renderCompanies(filteredCompanies);
     }
 
     loadData();
