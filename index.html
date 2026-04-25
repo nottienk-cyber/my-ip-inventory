@@ -27,13 +27,6 @@
     h1, h2, h3 {
       margin-top: 0;
     }
-    input {
-      width: 100%;
-      padding: 10px 12px;
-      margin: 6px 0 12px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
     button {
       border: none;
       border-radius: 8px;
@@ -278,6 +271,7 @@
       renderDevices();
     }
 
+    // ฟังก์ชันค้นหาบริษัท
     function filterData() {
       const query = document.getElementById("searchInput").value.toLowerCase();
       const filteredCompanies = companies.filter(company => {
