@@ -27,13 +27,6 @@
     h1, h2, h3 {
       margin-top: 0;
     }
-    input {
-      width: 100%;
-      padding: 10px 12px;
-      margin: 6px 0 12px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
     button {
       border: none;
       border-radius: 8px;
@@ -48,15 +41,6 @@
     .btn-secondary { background: #6b7280; color: #fff; }
     .btn-light { background: #e5e7eb; color: #111827; }
     .btn-warning { background: #d97706; color: #fff; }
-    .row {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .col {
-      flex: 1;
-      min-width: 220px;
-    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -72,29 +56,21 @@
     th {
       background: #f3f4f6;
     }
-    .hidden { display: none; }
-    .center-box {
-      max-width: 420px;
-      margin: 80px auto;
-    }
-    .company-item {
+    .row {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 12px;
-      border: 1px solid #ddd;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .col {
+      flex: 1;
+      min-width: 220px;
+    }
+    .empty {
+      padding: 16px;
+      background: #f9fafb;
+      border: 1px dashed #cbd5e1;
       border-radius: 10px;
-      margin-bottom: 10px;
-      background: #fafafa;
-    }
-    .company-name {
-      font-weight: bold;
-      font-size: 16px;
-    }
-    .muted {
-      color: #666;
-      font-size: 13px;
+      color: #475569;
     }
     .topbar {
       display: flex;
@@ -103,18 +79,9 @@
       gap: 12px;
       flex-wrap: wrap;
     }
-    .error {
-      color: #dc2626;
-      font-size: 14px;
-      margin-top: -6px;
-      margin-bottom: 12px;
-    }
-    .empty {
-      padding: 16px;
-      background: #f9fafb;
-      border: 1px dashed #cbd5e1;
-      border-radius: 10px;
-      color: #475569;
+    .muted {
+      color: #666;
+      font-size: 13px;
     }
   </style>
 </head>
@@ -129,7 +96,7 @@
         <input type="password" id="loginPass" placeholder="Password" />
         <div id="loginError" class="error hidden">Username หรือ Password ไม่ถูกต้อง</div>
         <button class="btn-primary" onclick="login()">Login</button>
-        <p class="muted">ค่าเริ่มต้น: admin / 1234</p>
+        <p class="muted"></p>
       </div>
     </div>
 
@@ -146,9 +113,10 @@
           </div>
         </div>
 
+        <!-- Search Box -->
         <div class="row">
           <div class="col">
-            <input type="text" id="companyNameInput" placeholder="ชื่อบริษัท" />
+            <input type="text" id="searchInput" placeholder="ค้นหาบริษัทหรืออุปกรณ์..." oninput="filterData()" />
           </div>
           <div>
             <button class="btn-primary" onclick="addCompany()">Add Company</button>
@@ -174,6 +142,19 @@
           </div>
         </div>
 
+        <table id="deviceTable">
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>IP</th>
+              <th>Username</th>
+              <th>Password</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="deviceList"></tbody>
+        </table>
+
         <div class="row">
           <div class="col">
             <input type="text" id="deviceNameInput" placeholder="Device Name" />
@@ -193,16 +174,14 @@
 
         <button class="btn-primary" onclick="addDevice()">Add Device</button>
         <button class="btn-success" onclick="saveDevices()">Save Devices</button>
-
-        <div id="deviceTableWrap"></div>
       </div>
     </div>
 
   </div>
 
   <script>
-    const APP_LOGIN_USER = "admin";
-    const APP_LOGIN_PASS = "1234";
+    const APP_LOGIN_USER = "ccadmin";
+    const APP_LOGIN_PASS = "CC$upp0rt#1";
 
     let companies = [];
     let selectedCompanyId = null;
@@ -292,6 +271,17 @@
       renderDevices();
     }
 
+    function filterData() {
+      const query = document.getElementById("searchInput").value.toLowerCase();
+      const filteredCompanies = companies.filter(company => {
+        const companyName = company.name.toLowerCase();
+        const devices = company.devices.map(device => device.name.toLowerCase());
+        return companyName.includes(query) || devices.some(device => device.includes(query));
+      });
+
+      renderCompanies(filteredCompanies);
+    }
+
     function addCompany() {
       const input = document.getElementById("companyNameInput");
       const name = input.value.trim();
@@ -318,18 +308,18 @@
       alert("บันทึกบริษัทเรียบร้อย");
     }
 
-    function renderCompanies() {
+    function renderCompanies(companiesToRender) {
       const wrap = document.getElementById("companyList");
 
-      if (companies.length === 0) {
+      if (companiesToRender.length === 0) {
         wrap.innerHTML = '<div class="empty">ยังไม่มีบริษัท</div>';
         return;
       }
 
-      wrap.innerHTML = companies.map(company => `
+      wrap.innerHTML = companiesToRender.map(company => `
         <div class="company-item">
           <div>
-            <div class="company-name">${escapeHtml(company.name)}</div>
+            <div class="company-name">${company.name}</div>
             <div class="muted">Devices: ${company.devices.length}</div>
           </div>
           <div>
@@ -394,50 +384,23 @@
     }
 
     function renderDevices() {
-      const wrap = document.getElementById("deviceTableWrap");
+      const wrap = document.getElementById("deviceList");
       const company = companies.find(c => c.id === selectedCompanyId);
       if (!company) return;
 
-      if (company.devices.length === 0) {
-        wrap.innerHTML = '<div class="empty">ยังไม่มีอุปกรณ์ในบริษัทนี้</div>';
-        return;
-      }
+      const deviceList = company.devices.map(device => `
+        <tr>
+          <td>${device.name}</td>
+          <td>${device.ip}</td>
+          <td>${device.user}</td>
+          <td>${device.pass}</td>
+          <td>
+            <button class="btn-danger" onclick="deleteDevice('${device.id}')">Delete</button>
+          </td>
+        </tr>
+      `).join("");
 
-      wrap.innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>Device</th>
-              <th>IP</th>
-              <th>Username</th>
-              <th>Password</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${company.devices.map(device => `
-              <tr>
-                <td>${escapeHtml(device.name)}</td>
-                <td>${escapeHtml(device.ip)}</td>
-                <td>${escapeHtml(device.user)}</td>
-                <td>${escapeHtml(device.pass)}</td>
-                <td>
-                  <button class="btn-danger" onclick="deleteDevice('${device.id}')">Delete</button>
-                </td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
-      `;
-    }
-
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+      wrap.innerHTML = deviceList;
     }
 
     loadData();
