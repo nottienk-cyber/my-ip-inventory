@@ -281,6 +281,7 @@
     // ฟังก์ชันค้นหาบริษัท
     function filterData() {
       const query = document.getElementById("searchInput").value.toLowerCase();
+      console.log("Search query:", query); // เพิ่มการแสดงข้อความนี้
       const filteredCompanies = companies.filter(company => {
         const companyName = company.name.toLowerCase();
         const devices = company.devices.map(device => device.name.toLowerCase());
