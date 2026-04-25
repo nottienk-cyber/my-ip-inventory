@@ -236,7 +236,19 @@
     .action-buttons {
       display: flex;
       gap: 8px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    .action-buttons button {
+      margin: 0;
+    }
+
+    .device-table th:last-child,
+    .device-table td:last-child {
+      min-width: 160px;
+      white-space: nowrap;
     }
 
     .table-input {
@@ -353,6 +365,45 @@
     let companies = [];
     let selectedCompanyId = null;
 
+    function pushAppState(page, companyId = null) {
+      const hash = companyId ? "#" + page + "-" + companyId : "#" + page;
+      history.pushState({ page, companyId }, "", hash);
+    }
+
+    function replaceAppState(page, companyId = null) {
+      const hash = companyId ? "#" + page + "-" + companyId : "#" + page;
+      history.replaceState({ page, companyId }, "", hash);
+    }
+
+    window.addEventListener("popstate", async function(event) {
+      const state = event.state;
+
+      if (!state) {
+        if (isLoggedIn()) {
+          await showCompanyPage(false);
+        } else {
+          showLoginPage(false);
+        }
+        return;
+      }
+
+      if (state.page === "login") {
+        showLoginPage(false);
+      }
+
+      if (state.page === "company") {
+        await showCompanyPage(false);
+      }
+
+      if (state.page === "addCompany") {
+        showAddCompanyPage(false);
+      }
+
+      if (state.page === "device" && state.companyId) {
+        await showDevicePage(state.companyId, false);
+      }
+    });
+
     function showToast(message, type = "success") {
       const toast = document.getElementById("toast");
 
@@ -418,7 +469,7 @@
       if (found) {
         sessionStorage.setItem("ip_inventory_logged_in", "1");
         err.classList.add("hidden");
-        await showCompanyPage();
+        await showCompanyPage(true);
         showToast("เข้าสู่ระบบเรียบร้อย ✅");
       } else {
         err.classList.remove("hidden");
@@ -431,7 +482,8 @@
       selectedCompanyId = null;
       document.getElementById("loginUser").value = "";
       document.getElementById("loginPass").value = "";
-      showLoginPage();
+      replaceAppState("login");
+      showLoginPage(false);
     }
 
     function isLoggedIn() {
@@ -445,23 +497,36 @@
       document.getElementById("devicePage").classList.add("hidden");
     }
 
-    function showLoginPage() {
+    function showLoginPage(push = true) {
       hideAllPages();
       document.getElementById("loginPage").classList.remove("hidden");
+
+      if (push) {
+        pushAppState("login");
+      }
     }
 
-    async function showCompanyPage() {
+    async function showCompanyPage(push = true) {
       hideAllPages();
       document.getElementById("companyPage").classList.remove("hidden");
+      selectedCompanyId = null;
       await loadData();
       renderCompanies();
+
+      if (push) {
+        pushAppState("company");
+      }
     }
 
-    function showAddCompanyPage() {
+    function showAddCompanyPage(push = true) {
       hideAllPages();
       document.getElementById("addCompanyPage").classList.remove("hidden");
       document.getElementById("companyNameInput").value = "";
       document.getElementById("companyNameInput").focus();
+
+      if (push) {
+        pushAppState("addCompany");
+      }
     }
 
     async function confirmAddCompany() {
@@ -489,7 +554,7 @@
         return;
       }
 
-      await showCompanyPage();
+      await showCompanyPage(true);
       showToast("เพิ่มบริษัทเรียบร้อย ✅");
     }
 
@@ -507,7 +572,7 @@
         return;
       }
 
-      await showCompanyPage();
+      await showCompanyPage(false);
       showToast("ลบบริษัทเรียบร้อย ✅");
     }
 
@@ -541,7 +606,7 @@
       `).join("");
     }
 
-    async function showDevicePage(companyId) {
+    async function showDevicePage(companyId, push = true) {
       selectedCompanyId = companyId;
       await loadData();
 
@@ -562,11 +627,15 @@
       }
 
       renderDevices();
+
+      if (push) {
+        pushAppState("device", companyId);
+      }
     }
 
     async function backToCompanies() {
       selectedCompanyId = null;
-      await showCompanyPage();
+      await showCompanyPage(true);
     }
 
     async function addDevice() {
@@ -674,9 +743,9 @@
               <tr>
                 <th style="width: 24%;">Device</th>
                 <th style="width: 24%;">IP / URL</th>
-                <th style="width: 20%;">Username</th>
-                <th style="width: 20%;">Password</th>
-                <th style="width: 12%;">Action</th>
+                <th style="width: 18%;">Username</th>
+                <th style="width: 18%;">Password</th>
+                <th style="width: 160px;">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -936,9 +1005,11 @@
 
     async function init() {
       if (isLoggedIn()) {
-        await showCompanyPage();
+        replaceAppState("company");
+        await showCompanyPage(false);
       } else {
-        showLoginPage();
+        replaceAppState("login");
+        showLoginPage(false);
       }
     }
 
