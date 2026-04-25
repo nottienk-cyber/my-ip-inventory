@@ -3,20 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IP Customer </title>
+  <title>IP Customer</title>
   <style>
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: #f4f6f8;
       color: #222;
     }
+
     .container {
       max-width: 1000px;
       margin: 30px auto;
       padding: 20px;
     }
+
     .card {
       background: #fff;
       border-radius: 12px;
@@ -24,7 +27,9 @@
       box-shadow: 0 2px 10px rgba(0,0,0,.08);
       margin-bottom: 20px;
     }
+
     h1, h2, h3 { margin-top: 0; }
+
     input {
       width: 100%;
       padding: 10px 12px;
@@ -32,6 +37,7 @@
       border: 1px solid #ccc;
       border-radius: 8px;
     }
+
     button {
       border: none;
       border-radius: 8px;
@@ -40,12 +46,13 @@
       margin-right: 8px;
       margin-bottom: 8px;
     }
+
     .btn-primary { background: #2563eb; color: #fff; }
-    .btn-success { background: #16a34a; color: #fff; }
     .btn-danger  { background: #dc2626; color: #fff; }
     .btn-secondary { background: #6b7280; color: #fff; }
     .btn-light { background: #e5e7eb; color: #111827; }
     .btn-warning { background: #d97706; color: #fff; }
+    .btn-success { background: #16a34a; color: #fff; }
 
     table {
       width: 100%;
@@ -53,12 +60,14 @@
       margin-top: 12px;
       background: #fff;
     }
+
     th, td {
       border: 1px solid #ddd;
       padding: 10px;
       text-align: left;
       vertical-align: top;
     }
+
     th { background: #f3f4f6; }
 
     .hidden { display: none; }
@@ -112,15 +121,47 @@
       border-radius: 10px;
       color: #475569;
     }
+
+    /* Toast UI */
+    #toast {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 9999;
+      min-width: 260px;
+      max-width: 360px;
+      background: #16a34a;
+      color: white;
+      padding: 14px 18px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.18);
+      font-weight: bold;
+      opacity: 0;
+      transform: translateY(-20px);
+      pointer-events: none;
+      transition: all .3s ease;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #toast.error-toast {
+      background: #dc2626;
+    }
   </style>
 </head>
 <body>
+
+  <div id="toast"></div>
+
   <div class="container">
 
     <!-- LOGIN PAGE -->
     <div id="loginPage" class="center-box">
       <div class="card">
-        <h2>Login</h2>
+        <h2>IP Customer Login</h2>
         <input type="text" id="loginUser" placeholder="Username" />
         <input type="password" id="loginPass" placeholder="Password" />
         <div id="loginError" class="error hidden">Username หรือ Password ไม่ถูกต้อง</div>
@@ -134,7 +175,7 @@
         <div class="topbar">
           <div>
             <h1>Company List</h1>
-            <div class="muted">เพิ่ม / ลบบริษัท แล้วกด Save</div>
+            <div class="muted">เพิ่ม / ลบบริษัท ระบบจะบันทึกอัตโนมัติ</div>
           </div>
           <div>
             <button class="btn-secondary" onclick="logout()">Logout</button>
@@ -145,7 +186,6 @@
 
         <button class="btn-primary" onclick="renderCompanies()">ค้นหา</button>
         <button class="btn-primary" onclick="showAddCompanyPage()">Add Company</button>
-        <button class="btn-success" onclick="saveCompanies()">Save Companies</button>
 
         <div id="companyList"></div>
         <div id="noResults" class="empty hidden">ไม่พบข้อมูลที่ค้นหา</div>
@@ -168,7 +208,7 @@
         <div class="topbar">
           <div>
             <h2 id="devicePageTitle">Devices</h2>
-            <div class="muted">เพิ่ม / ลบอุปกรณ์ แล้วกด Save</div>
+            <div class="muted">เพิ่ม / ลบอุปกรณ์ ระบบจะบันทึกอัตโนมัติ</div>
           </div>
           <div>
             <button class="btn-light" onclick="backToCompanies()">Back</button>
@@ -184,7 +224,6 @@
         <div id="deviceError" class="error hidden">กรอก Device / IP / Username / Password ให้ครบก่อน</div>
 
         <button id="addDeviceBtn" class="btn-primary" onclick="addDevice()">Add Device</button>
-        <button class="btn-success" onclick="saveDevices()">Save Devices</button>
 
         <div id="deviceTableWrap"></div>
       </div>
@@ -203,6 +242,23 @@
 
     function uid() {
       return Date.now().toString() + Math.floor(Math.random() * 1000).toString();
+    }
+
+    function showToast(message, type = "success") {
+      const toast = document.getElementById("toast");
+
+      toast.innerText = message;
+      toast.className = "";
+
+      if (type === "error") {
+        toast.classList.add("error-toast");
+      }
+
+      toast.classList.add("show");
+
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2200);
     }
 
     function loadData() {
@@ -247,8 +303,10 @@
         sessionStorage.setItem("ip_inventory_logged_in", "1");
         err.classList.add("hidden");
         showCompanyPage();
+        showToast("เข้าสู่ระบบเรียบร้อย ✅");
       } else {
         err.classList.remove("hidden");
+        showToast("Username หรือ Password ไม่ถูกต้อง ❌", "error");
       }
     }
 
@@ -294,7 +352,7 @@
       const name = input.value.trim();
 
       if (!name) {
-        alert("กรุณากรอกชื่อบริษัท");
+        showToast("กรุณากรอกชื่อบริษัท ❌", "error");
         return;
       }
 
@@ -306,6 +364,7 @@
 
       persist();
       showCompanyPage();
+      showToast("เพิ่มบริษัทเรียบร้อย ✅");
     }
 
     function deleteCompany(companyId) {
@@ -314,11 +373,7 @@
       companies = companies.filter(c => c.id !== companyId);
       persist();
       renderCompanies();
-    }
-
-    function saveCompanies() {
-      persist();
-      alert("บันทึกบริษัทเรียบร้อย");
+      showToast("ลบบริษัทเรียบร้อย ✅");
     }
 
     function renderCompanies() {
@@ -380,6 +435,7 @@
 
       if (!name || !ip || !user || !pass) {
         err.classList.remove("hidden");
+        showToast("กรอกข้อมูลอุปกรณ์ให้ครบ ❌", "error");
         return;
       }
 
@@ -399,6 +455,7 @@
       persist();
       clearDeviceInputs();
       renderDevices();
+      showToast("เพิ่มอุปกรณ์เรียบร้อย ✅");
     }
 
     function clearDeviceInputs() {
@@ -418,11 +475,7 @@
 
       persist();
       renderDevices();
-    }
-
-    function saveDevices() {
-      persist();
-      alert("บันทึกอุปกรณ์เรียบร้อย");
+      showToast("ลบอุปกรณ์เรียบร้อย ✅");
     }
 
     function renderDevices() {
@@ -493,6 +546,7 @@
 
       if (!name || !ip || !user || !pass) {
         err.classList.remove("hidden");
+        showToast("กรอกข้อมูลอุปกรณ์ให้ครบ ❌", "error");
         return;
       }
 
@@ -513,6 +567,7 @@
       clearDeviceInputs();
       resetDeviceButton();
       renderDevices();
+      showToast("แก้ไขอุปกรณ์เรียบร้อย ✅");
     }
 
     function resetDeviceButton() {
