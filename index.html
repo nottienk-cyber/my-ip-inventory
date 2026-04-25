@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>IP Customer</title>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
   <style>
@@ -178,7 +179,7 @@
         <div class="topbar">
           <div>
             <h1>Company List</h1>
-            <div class="muted">เพิ่ม / ลบบริษัท / Import Excel ระบบจะบันทึกอัตโนมัติ</div>
+            <div class="muted">ข้อมูลบันทึกลง Supabase เปิดจากเครื่องอื่นจะเห็นข้อมูลเดียวกัน</div>
           </div>
           <div>
             <button class="btn-secondary" onclick="logout()">Logout</button>
@@ -214,7 +215,7 @@
         <div class="topbar">
           <div>
             <h2 id="devicePageTitle">Devices</h2>
-            <div class="muted">เพิ่ม / ลบอุปกรณ์ ระบบจะบันทึกอัตโนมัติ</div>
+            <div class="muted">เพิ่ม / ลบ / แก้ไขอุปกรณ์ ระบบจะบันทึกอัตโนมัติ</div>
           </div>
           <div>
             <button class="btn-light" onclick="backToCompanies()">Back</button>
@@ -227,7 +228,7 @@
         <input type="text" id="deviceUserInput" placeholder="Username" />
         <input type="text" id="devicePassInput" placeholder="Password" />
 
-        <div id="deviceError" class="error hidden">กรอก Device / IP / Username / Password ให้ครบก่อน</div>
+        <div id="deviceError" class="error hidden">กรอก Device Name อย่างน้อย 1 ช่อง</div>
 
         <button id="addDeviceBtn" class="btn-primary" onclick="addDevice()">Add Device</button>
 
@@ -238,6 +239,10 @@
   </div>
 
   <script>
+    const SUPABASE_URL = "https://axluexlgltkrmnytswwq.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_qgjQeHyWCoBQ2ruSu5vfAg_MagAFIul";
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     const USERS = [
       { user: "ccadmin", pass: "CC$upp0rt#1" },
       { user: "admin", pass: "12345678" }
@@ -245,10 +250,6 @@
 
     let companies = [];
     let selectedCompanyId = null;
-
-    function uid() {
-      return Date.now().toString() + Math.floor(Math.random() * 1000).toString();
-    }
 
     function showToast(message, type = "success") {
       const toast = document.getElementById("toast");
@@ -267,22 +268,45 @@
       }, 2200);
     }
 
-    function loadData() {
-      const data = localStorage.getItem("ip_inventory_data");
+    async function loadData() {
+      const { data, error } = await db
+        .from("companies")
+        .select(`
+          id,
+          name,
+          created_at,
+          devices (
+            id,
+            name,
+            ip,
+            username,
+            password,
+            created_at
+          )
+        `)
+        .order("created_at", { ascending: true });
 
-      if (data) {
-        companies = JSON.parse(data);
-      } else {
+      if (error) {
+        console.error(error);
+        showToast("โหลดข้อมูลจาก Supabase ไม่สำเร็จ ❌", "error");
         companies = [];
-        persist();
+        return;
       }
+
+      companies = (data || []).map(company => ({
+        id: company.id,
+        name: company.name,
+        devices: (company.devices || []).map(device => ({
+          id: device.id,
+          name: device.name || "",
+          ip: device.ip || "",
+          user: device.username || "",
+          pass: device.password || ""
+        }))
+      }));
     }
 
-    function persist() {
-      localStorage.setItem("ip_inventory_data", JSON.stringify(companies));
-    }
-
-    function login() {
+    async function login() {
       const u = document.getElementById("loginUser").value.trim();
       const p = document.getElementById("loginPass").value.trim();
       const err = document.getElementById("loginError");
@@ -292,7 +316,7 @@
       if (found) {
         sessionStorage.setItem("ip_inventory_logged_in", "1");
         err.classList.add("hidden");
-        showCompanyPage();
+        await showCompanyPage();
         showToast("เข้าสู่ระบบเรียบร้อย ✅");
       } else {
         err.classList.remove("hidden");
@@ -324,9 +348,10 @@
       document.getElementById("loginPage").classList.remove("hidden");
     }
 
-    function showCompanyPage() {
+    async function showCompanyPage() {
       hideAllPages();
       document.getElementById("companyPage").classList.remove("hidden");
+      await loadData();
       renderCompanies();
     }
 
@@ -337,7 +362,7 @@
       document.getElementById("companyNameInput").focus();
     }
 
-    function confirmAddCompany() {
+    async function confirmAddCompany() {
       const input = document.getElementById("companyNameInput");
       const name = input.value.trim();
 
@@ -346,23 +371,41 @@
         return;
       }
 
-      companies.push({
-        id: uid(),
-        name: name,
-        devices: []
-      });
+      const exists = companies.find(c => c.name.toLowerCase() === name.toLowerCase());
+      if (exists) {
+        showToast("มีบริษัทนี้อยู่แล้ว ❌", "error");
+        return;
+      }
 
-      persist();
-      showCompanyPage();
+      const { error } = await db
+        .from("companies")
+        .insert([{ name: name }]);
+
+      if (error) {
+        console.error(error);
+        showToast("เพิ่มบริษัทไม่สำเร็จ ❌", "error");
+        return;
+      }
+
+      await showCompanyPage();
       showToast("เพิ่มบริษัทเรียบร้อย ✅");
     }
 
-    function deleteCompany(companyId) {
+    async function deleteCompany(companyId) {
       if (!confirm("ลบบริษัทนี้ใช่ไหม?")) return;
 
-      companies = companies.filter(c => c.id !== companyId);
-      persist();
-      renderCompanies();
+      const { error } = await db
+        .from("companies")
+        .delete()
+        .eq("id", companyId);
+
+      if (error) {
+        console.error(error);
+        showToast("ลบบริษัทไม่สำเร็จ ❌", "error");
+        return;
+      }
+
+      await showCompanyPage();
       showToast("ลบบริษัทเรียบร้อย ✅");
     }
 
@@ -396,8 +439,10 @@
       `).join("");
     }
 
-    function showDevicePage(companyId) {
+    async function showDevicePage(companyId) {
       selectedCompanyId = companyId;
+      await loadData();
+
       const company = companies.find(c => c.id === companyId);
 
       if (!company) return;
@@ -412,38 +457,44 @@
       renderDevices();
     }
 
-    function backToCompanies() {
-      showCompanyPage();
+    async function backToCompanies() {
+      selectedCompanyId = null;
+      await showCompanyPage();
     }
 
-    function addDevice() {
+    async function addDevice() {
       const name = document.getElementById("deviceNameInput").value.trim();
       const ip = document.getElementById("deviceIpInput").value.trim();
       const user = document.getElementById("deviceUserInput").value.trim();
       const pass = document.getElementById("devicePassInput").value.trim();
       const err = document.getElementById("deviceError");
 
-      if (!name || !ip || !user || !pass) {
+      if (!name) {
         err.classList.remove("hidden");
-        showToast("กรอกข้อมูลอุปกรณ์ให้ครบ ❌", "error");
+        showToast("กรอก Device Name ก่อน ❌", "error");
         return;
       }
 
       err.classList.add("hidden");
 
-      const company = companies.find(c => c.id === selectedCompanyId);
-      if (!company) return;
+      const { error } = await db
+        .from("devices")
+        .insert([{
+          company_id: selectedCompanyId,
+          name: name,
+          ip: ip,
+          username: user,
+          password: pass
+        }]);
 
-      company.devices.push({
-        id: uid(),
-        name,
-        ip,
-        user,
-        pass
-      });
+      if (error) {
+        console.error(error);
+        showToast("เพิ่มอุปกรณ์ไม่สำเร็จ ❌", "error");
+        return;
+      }
 
-      persist();
       clearDeviceInputs();
+      await loadData();
       renderDevices();
       showToast("เพิ่มอุปกรณ์เรียบร้อย ✅");
     }
@@ -455,15 +506,21 @@
       document.getElementById("devicePassInput").value = "";
     }
 
-    function deleteDevice(deviceId) {
+    async function deleteDevice(deviceId) {
       if (!confirm("ลบอุปกรณ์นี้ใช่ไหม?")) return;
 
-      const company = companies.find(c => c.id === selectedCompanyId);
-      if (!company) return;
+      const { error } = await db
+        .from("devices")
+        .delete()
+        .eq("id", deviceId);
 
-      company.devices = company.devices.filter(d => d.id !== deviceId);
+      if (error) {
+        console.error(error);
+        showToast("ลบอุปกรณ์ไม่สำเร็จ ❌", "error");
+        return;
+      }
 
-      persist();
+      await loadData();
       renderDevices();
       showToast("ลบอุปกรณ์เรียบร้อย ✅");
     }
@@ -493,10 +550,10 @@
           <tbody>
             ${company.devices.map(device => `
               <tr>
-                <td>${escapeHtml(device.name)}</td>
-                <td>${escapeHtml(device.ip)}</td>
-                <td>${escapeHtml(device.user)}</td>
-                <td>${escapeHtml(device.pass)}</td>
+                <td>${escapeHtml(device.name || "")}</td>
+                <td>${escapeHtml(device.ip || "")}</td>
+                <td>${escapeHtml(device.user || "")}</td>
+                <td>${escapeHtml(device.pass || "")}</td>
                 <td>
                   <button class="btn-warning" onclick="editDevice('${device.id}')">Edit</button>
                   <button class="btn-danger" onclick="deleteDevice('${device.id}')">Delete</button>
@@ -515,10 +572,10 @@
       const device = company.devices.find(d => d.id === deviceId);
       if (!device) return;
 
-      document.getElementById("deviceNameInput").value = device.name;
-      document.getElementById("deviceIpInput").value = device.ip;
-      document.getElementById("deviceUserInput").value = device.user;
-      document.getElementById("devicePassInput").value = device.pass;
+      document.getElementById("deviceNameInput").value = device.name || "";
+      document.getElementById("deviceIpInput").value = device.ip || "";
+      document.getElementById("deviceUserInput").value = device.user || "";
+      document.getElementById("devicePassInput").value = device.pass || "";
 
       const btn = document.getElementById("addDeviceBtn");
       btn.innerText = "Update Device";
@@ -527,35 +584,40 @@
       };
     }
 
-    function updateDevice(deviceId) {
+    async function updateDevice(deviceId) {
       const name = document.getElementById("deviceNameInput").value.trim();
       const ip = document.getElementById("deviceIpInput").value.trim();
       const user = document.getElementById("deviceUserInput").value.trim();
       const pass = document.getElementById("devicePassInput").value.trim();
       const err = document.getElementById("deviceError");
 
-      if (!name || !ip || !user || !pass) {
+      if (!name) {
         err.classList.remove("hidden");
-        showToast("กรอกข้อมูลอุปกรณ์ให้ครบ ❌", "error");
+        showToast("กรอก Device Name ก่อน ❌", "error");
         return;
       }
 
       err.classList.add("hidden");
 
-      const company = companies.find(c => c.id === selectedCompanyId);
-      if (!company) return;
+      const { error } = await db
+        .from("devices")
+        .update({
+          name: name,
+          ip: ip,
+          username: user,
+          password: pass
+        })
+        .eq("id", deviceId);
 
-      const device = company.devices.find(d => d.id === deviceId);
-      if (!device) return;
+      if (error) {
+        console.error(error);
+        showToast("แก้ไขอุปกรณ์ไม่สำเร็จ ❌", "error");
+        return;
+      }
 
-      device.name = name;
-      device.ip = ip;
-      device.user = user;
-      device.pass = pass;
-
-      persist();
       clearDeviceInputs();
       resetDeviceButton();
+      await loadData();
       renderDevices();
       showToast("แก้ไขอุปกรณ์เรียบร้อย ✅");
     }
@@ -566,68 +628,144 @@
       btn.onclick = addDevice;
     }
 
-    function importExcel(event) {
+    async function importExcel(event) {
       const file = event.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
 
-      reader.onload = function(e) {
+      reader.onload = async function(e) {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: "array" });
 
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
+        let importCount = 0;
+        let skipCount = 0;
 
-        const rows = XLSX.utils.sheet_to_json(sheet);
+        for (const sheetName of workbook.SheetNames) {
+          const sheet = workbook.Sheets[sheetName];
+          const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
-        if (rows.length === 0) {
-          showToast("ไฟล์ Excel ไม่มีข้อมูล ❌", "error");
-          return;
+          for (const row of rows) {
+            const companyName = String(
+              row.Company ||
+              row.Customer ||
+              row["Company Name"] ||
+              row["Customer Name"] ||
+              sheetName ||
+              ""
+            ).trim();
+
+            const deviceName = String(
+              row.Device ||
+              row.Equipment ||
+              row["Device Name"] ||
+              row["Equipment Name"] ||
+              row["รายการ"] ||
+              row["Domain Name"] ||
+              row["Instance Name"] ||
+              ""
+            ).trim();
+
+            const ip = String(
+              row.IP ||
+              row["IP Address"] ||
+              row["Address"] ||
+              ""
+            ).trim();
+
+            const user = String(
+              row.Username ||
+              row.User ||
+              row["User"] ||
+              row["username"] ||
+              ""
+            ).trim();
+
+            const pass = String(
+              row.Password ||
+              row.Pass ||
+              row["password"] ||
+              ""
+            ).trim();
+
+            if (!companyName || !deviceName) {
+              skipCount++;
+              continue;
+            }
+
+            let company = companies.find(c =>
+              c.name.toLowerCase() === companyName.toLowerCase()
+            );
+
+            if (!company) {
+              const { data: newCompany, error: companyError } = await db
+                .from("companies")
+                .insert([{ name: companyName }])
+                .select()
+                .single();
+
+              if (companyError) {
+                console.error(companyError);
+                skipCount++;
+                continue;
+              }
+
+              company = {
+                id: newCompany.id,
+                name: newCompany.name,
+                devices: []
+              };
+
+              companies.push(company);
+            }
+
+            const duplicate = company.devices.find(d =>
+              (d.name || "").toLowerCase() === deviceName.toLowerCase() &&
+              (d.ip || "") === ip
+            );
+
+            if (duplicate) {
+              skipCount++;
+              continue;
+            }
+
+            const { data: newDevice, error: deviceError } = await db
+              .from("devices")
+              .insert([{
+                company_id: company.id,
+                name: deviceName,
+                ip: ip,
+                username: user,
+                password: pass
+              }])
+              .select()
+              .single();
+
+            if (deviceError) {
+              console.error(deviceError);
+              skipCount++;
+              continue;
+            }
+
+            company.devices.push({
+              id: newDevice.id,
+              name: deviceName,
+              ip: ip,
+              user: user,
+              pass: pass
+            });
+
+            importCount++;
+          }
         }
 
-        let importCount = 0;
-
-        rows.forEach(row => {
-          const companyName = String(row.Company || "").trim();
-          const deviceName = String(row.Device || "").trim();
-          const ip = String(row.IP || "").trim();
-          const user = String(row.Username || "").trim();
-          const pass = String(row.Password || "").trim();
-
-          if (!companyName || !deviceName || !ip) return;
-
-          let company = companies.find(c =>
-            c.name.toLowerCase() === companyName.toLowerCase()
-          );
-
-          if (!company) {
-            company = {
-              id: uid(),
-              name: companyName,
-              devices: []
-            };
-            companies.push(company);
-          }
-
-          company.devices.push({
-            id: uid(),
-            name: deviceName,
-            ip: ip,
-            user: user,
-            pass: pass
-          });
-
-          importCount++;
-        });
-
-        persist();
+        await loadData();
         renderCompanies();
 
         if (importCount > 0) {
-          showToast("Import Excel เรียบร้อย " + importCount + " รายการ ✅");
+          showToast("Import Excel สำเร็จ " + importCount + " รายการ ✅");
         } else {
-          showToast("Import ไม่สำเร็จ ตรวจสอบหัวตาราง Excel ❌", "error");
+          showToast("Import ไม่สำเร็จ หรือข้อมูลซ้ำทั้งหมด ❌", "error");
         }
 
         event.target.value = "";
@@ -645,13 +783,15 @@
         .replaceAll("'", "&#039;");
     }
 
-    loadData();
-
-    if (isLoggedIn()) {
-      showCompanyPage();
-    } else {
-      showLoginPage();
+    async function init() {
+      if (isLoggedIn()) {
+        await showCompanyPage();
+      } else {
+        showLoginPage();
+      }
     }
+
+    init();
   </script>
 </body>
 </html>
