@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>IP Customer</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
   <style>
     * { box-sizing: border-box; }
 
@@ -122,7 +125,6 @@
       color: #475569;
     }
 
-    /* Toast UI */
     #toast {
       position: fixed;
       top: 24px;
@@ -152,6 +154,7 @@
     }
   </style>
 </head>
+
 <body>
 
   <div id="toast"></div>
@@ -175,7 +178,7 @@
         <div class="topbar">
           <div>
             <h1>Company List</h1>
-            <div class="muted">เพิ่ม / ลบบริษัท ระบบจะบันทึกอัตโนมัติ</div>
+            <div class="muted">เพิ่ม / ลบบริษัท / Import Excel ระบบจะบันทึกอัตโนมัติ</div>
           </div>
           <div>
             <button class="btn-secondary" onclick="logout()">Logout</button>
@@ -186,6 +189,9 @@
 
         <button class="btn-primary" onclick="renderCompanies()">ค้นหา</button>
         <button class="btn-primary" onclick="showAddCompanyPage()">Add Company</button>
+
+        <input type="file" id="excelFile" accept=".xlsx,.xls" class="hidden" onchange="importExcel(event)" />
+        <button class="btn-success" onclick="document.getElementById('excelFile').click()">Import Excel</button>
 
         <div id="companyList"></div>
         <div id="noResults" class="empty hidden">ไม่พบข้อมูลที่ค้นหา</div>
@@ -267,23 +273,7 @@
       if (data) {
         companies = JSON.parse(data);
       } else {
-        companies = [
-          {
-            id: uid(),
-            name: "ABC Co.,Ltd.",
-            devices: [
-              { id: uid(), name: "FortiGate", ip: "192.168.1.1", user: "admin", pass: "pass123" },
-              { id: uid(), name: "Switch", ip: "192.168.1.2", user: "cisco", pass: "cisco123" }
-            ]
-          },
-          {
-            id: uid(),
-            name: "XYZ Co.,Ltd.",
-            devices: [
-              { id: uid(), name: "Access Point", ip: "10.0.0.1", user: "ubnt", pass: "ubnt123" }
-            ]
-          }
-        ];
+        companies = [];
         persist();
       }
     }
@@ -574,6 +564,76 @@
       const btn = document.getElementById("addDeviceBtn");
       btn.innerText = "Add Device";
       btn.onclick = addDevice;
+    }
+
+    function importExcel(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+
+        const rows = XLSX.utils.sheet_to_json(sheet);
+
+        if (rows.length === 0) {
+          showToast("ไฟล์ Excel ไม่มีข้อมูล ❌", "error");
+          return;
+        }
+
+        let importCount = 0;
+
+        rows.forEach(row => {
+          const companyName = String(row.Company || "").trim();
+          const deviceName = String(row.Device || "").trim();
+          const ip = String(row.IP || "").trim();
+          const user = String(row.Username || "").trim();
+          const pass = String(row.Password || "").trim();
+
+          if (!companyName || !deviceName || !ip) return;
+
+          let company = companies.find(c =>
+            c.name.toLowerCase() === companyName.toLowerCase()
+          );
+
+          if (!company) {
+            company = {
+              id: uid(),
+              name: companyName,
+              devices: []
+            };
+            companies.push(company);
+          }
+
+          company.devices.push({
+            id: uid(),
+            name: deviceName,
+            ip: ip,
+            user: user,
+            pass: pass
+          });
+
+          importCount++;
+        });
+
+        persist();
+        renderCompanies();
+
+        if (importCount > 0) {
+          showToast("Import Excel เรียบร้อย " + importCount + " รายการ ✅");
+        } else {
+          showToast("Import ไม่สำเร็จ ตรวจสอบหัวตาราง Excel ❌", "error");
+        }
+
+        event.target.value = "";
+      };
+
+      reader.readAsArrayBuffer(file);
     }
 
     function escapeHtml(str) {
