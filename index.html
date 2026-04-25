@@ -111,7 +111,6 @@
 </head>
 <body>
   <div class="container">
-
     <!-- LOGIN PAGE -->
     <div id="loginPage" class="center-box">
       <div class="card">
@@ -120,7 +119,7 @@
         <input type="password" id="loginPass" placeholder="Password" />
         <div id="loginError" class="error hidden">Username หรือ Password ไม่ถูกต้อง</div>
         <button class="btn-primary" onclick="login()">Login</button>
-             </div>
+      </div>
     </div>
 
     <!-- COMPANY PAGE -->
@@ -199,6 +198,7 @@
 
     let companies = [];
     let selectedCompanyId = null;
+    let editingDeviceId = null;
 
     function uid() {
       return Date.now().toString() + Math.floor(Math.random() * 1000).toString();
@@ -423,6 +423,7 @@
                 <td>${escapeHtml(device.user)}</td>
                 <td>${escapeHtml(device.pass)}</td>
                 <td>
+                  <button class="btn-warning" onclick="editDevice('${device.id}')">Edit</button>
                   <button class="btn-danger" onclick="deleteDevice('${device.id}')">Delete</button>
                 </td>
               </tr>
@@ -430,6 +431,52 @@
           </tbody>
         </table>
       `;
+    }
+
+    function editDevice(deviceId) {
+      const company = companies.find(c => c.id === selectedCompanyId);
+      const device = company.devices.find(d => d.id === deviceId);
+
+      if (device) {
+        document.getElementById("deviceNameInput").value = device.name;
+        document.getElementById("deviceIpInput").value = device.ip;
+        document.getElementById("deviceUserInput").value = device.user;
+        document.getElementById("devicePassInput").value = device.pass;
+
+        document.getElementById("addDeviceBtn").innerText = "Update Device";
+        document.getElementById("addDeviceBtn").onclick = function() {
+          updateDevice(deviceId);
+        };
+      }
+    }
+
+    function updateDevice(deviceId) {
+      const name = document.getElementById("deviceNameInput").value.trim();
+      const ip = document.getElementById("deviceIpInput").value.trim();
+      const user = document.getElementById("deviceUserInput").value.trim();
+      const pass = document.getElementById("devicePassInput").value.trim();
+      const err = document.getElementById("deviceError");
+
+      if (!name || !ip || !user || !pass) {
+        err.classList.remove("hidden");
+        return;
+      }
+
+      err.classList.add("hidden");
+
+      const company = companies.find(c => c.id === selectedCompanyId);
+      if (!company) return;
+
+      const device = company.devices.find(d => d.id === deviceId);
+      if (device) {
+        device.name = name;
+        device.ip = ip;
+        device.user = user;
+        device.pass = pass;
+      }
+
+      clearDeviceInputs();
+      renderDevices();
     }
 
     function escapeHtml(str) {
