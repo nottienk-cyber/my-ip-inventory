@@ -79,10 +79,6 @@
       gap: 12px;
       flex-wrap: wrap;
     }
-    .muted {
-      color: #666;
-      font-size: 13px;
-    }
   </style>
 </head>
 <body>
@@ -96,7 +92,7 @@
         <input type="password" id="loginPass" placeholder="Password" />
         <div id="loginError" class="error hidden">Username หรือ Password ไม่ถูกต้อง</div>
         <button class="btn-primary" onclick="login()">Login</button>
-        <p class="muted"></p>
+        <p class="muted">ค่าเริ่มต้น: admin / 1234</p>
       </div>
     </div>
 
@@ -113,10 +109,10 @@
           </div>
         </div>
 
-        <!-- Search Box -->
+        <!-- Add Company -->
         <div class="row">
           <div class="col">
-            <input type="text" id="searchInput" placeholder="ค้นหาบริษัทหรืออุปกรณ์..." oninput="filterData()" />
+            <input type="text" id="companyNameInput" placeholder="ชื่อบริษัท" />
           </div>
           <div>
             <button class="btn-primary" onclick="addCompany()">Add Company</button>
@@ -180,8 +176,8 @@
   </div>
 
   <script>
-    const APP_LOGIN_USER = "ccadmin";
-    const APP_LOGIN_PASS = "CC$upp0rt#1";
+    const APP_LOGIN_USER = "admin";
+    const APP_LOGIN_PASS = "1234";
 
     let companies = [];
     let selectedCompanyId = null;
@@ -271,17 +267,6 @@
       renderDevices();
     }
 
-    function filterData() {
-      const query = document.getElementById("searchInput").value.toLowerCase();
-      const filteredCompanies = companies.filter(company => {
-        const companyName = company.name.toLowerCase();
-        const devices = company.devices.map(device => device.name.toLowerCase());
-        return companyName.includes(query) || devices.some(device => device.includes(query));
-      });
-
-      renderCompanies(filteredCompanies);
-    }
-
     function addCompany() {
       const input = document.getElementById("companyNameInput");
       const name = input.value.trim();
@@ -308,15 +293,15 @@
       alert("บันทึกบริษัทเรียบร้อย");
     }
 
-    function renderCompanies(companiesToRender) {
+    function renderCompanies() {
       const wrap = document.getElementById("companyList");
 
-      if (companiesToRender.length === 0) {
+      if (companies.length === 0) {
         wrap.innerHTML = '<div class="empty">ยังไม่มีบริษัท</div>';
         return;
       }
 
-      wrap.innerHTML = companiesToRender.map(company => `
+      wrap.innerHTML = companies.map(company => `
         <div class="company-item">
           <div>
             <div class="company-name">${company.name}</div>
