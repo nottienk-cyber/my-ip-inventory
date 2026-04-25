@@ -19,16 +19,16 @@
     }
 
     .container {
-      max-width: 1000px;
+      max-width: 1100px;
       margin: 30px auto;
       padding: 20px;
     }
 
     .card {
       background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.08);
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 4px 18px rgba(0,0,0,.08);
       margin-bottom: 20px;
     }
 
@@ -40,6 +40,13 @@
       margin: 6px 0 12px;
       border: 1px solid #ccc;
       border-radius: 8px;
+      font-size: 14px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,.12);
     }
 
     button {
@@ -49,6 +56,7 @@
       cursor: pointer;
       margin-right: 8px;
       margin-bottom: 8px;
+      font-size: 14px;
     }
 
     .btn-primary { background: #2563eb; color: #fff; }
@@ -57,22 +65,6 @@
     .btn-light { background: #e5e7eb; color: #111827; }
     .btn-warning { background: #d97706; color: #fff; }
     .btn-success { background: #16a34a; color: #fff; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-      background: #fff;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: left;
-      vertical-align: top;
-    }
-
-    th { background: #f3f4f6; }
 
     .hidden { display: none; }
 
@@ -86,11 +78,16 @@
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
+      padding: 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
       margin-bottom: 10px;
       background: #fafafa;
+    }
+
+    .company-item:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
     }
 
     .company-name {
@@ -124,6 +121,7 @@
       border: 1px dashed #cbd5e1;
       border-radius: 10px;
       color: #475569;
+      margin-top: 12px;
     }
 
     #toast {
@@ -152,6 +150,93 @@
 
     #toast.error-toast {
       background: #dc2626;
+    }
+
+    .device-tools {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin: 18px 0 10px;
+      flex-wrap: wrap;
+    }
+
+    .device-search {
+      flex: 1;
+      min-width: 260px;
+      margin: 0;
+    }
+
+    .device-count {
+      background: #eef2ff;
+      color: #1e40af;
+      padding: 9px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      margin-top: 10px;
+    }
+
+    .device-table {
+      width: 100%;
+      min-width: 900px;
+      border-collapse: collapse;
+    }
+
+    .device-table th {
+      background: #f8fafc;
+      color: #111827;
+      font-weight: bold;
+      font-size: 14px;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 12px;
+      text-align: left;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .device-table td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 12px;
+      vertical-align: top;
+    }
+
+    .device-table tr:hover {
+      background: #f9fafb;
+    }
+
+    .device-name-cell {
+      font-weight: bold;
+      color: #111827;
+      max-width: 240px;
+      word-break: break-word;
+    }
+
+    .ip-cell {
+      font-family: Consolas, monospace;
+      color: #0f172a;
+      word-break: break-word;
+    }
+
+    .pass-cell {
+      font-family: Consolas, monospace;
+      color: #374151;
+      word-break: break-word;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     .table-input {
@@ -237,6 +322,17 @@
         <div id="deviceError" class="error hidden">กรอก Device Name อย่างน้อย 1 ช่อง</div>
 
         <button id="addDeviceBtn" class="btn-primary" onclick="addDevice()">Add Device</button>
+
+        <div class="device-tools">
+          <input
+            type="text"
+            id="deviceSearchInput"
+            class="device-search"
+            placeholder="ค้นหา Device / IP / Username / Password..."
+            onkeyup="renderDevices()"
+          />
+          <div id="deviceCount" class="device-count">Devices: 0</div>
+        </div>
 
         <div id="deviceTableWrap"></div>
       </div>
@@ -450,7 +546,6 @@
       await loadData();
 
       const company = companies.find(c => c.id === companyId);
-
       if (!company) return;
 
       hideAllPages();
@@ -460,6 +555,12 @@
 
       resetDeviceButton();
       clearDeviceInputs();
+
+      const deviceSearchInput = document.getElementById("deviceSearchInput");
+      if (deviceSearchInput) {
+        deviceSearchInput.value = "";
+      }
+
       renderDevices();
     }
 
@@ -533,41 +634,69 @@
 
     function renderDevices() {
       const wrap = document.getElementById("deviceTableWrap");
+      const countBox = document.getElementById("deviceCount");
       const company = companies.find(c => c.id === selectedCompanyId);
 
       if (!company) return;
+
+      const searchInput = document.getElementById("deviceSearchInput");
+      const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+      const filteredDevices = company.devices.filter(device => {
+        const text = [
+          device.name || "",
+          device.ip || "",
+          device.user || "",
+          device.pass || ""
+        ].join(" ").toLowerCase();
+
+        return text.includes(query);
+      });
+
+      if (countBox) {
+        countBox.innerText = "Devices: " + filteredDevices.length + " / " + company.devices.length;
+      }
 
       if (company.devices.length === 0) {
         wrap.innerHTML = '<div class="empty">ยังไม่มีอุปกรณ์ในบริษัทนี้</div>';
         return;
       }
 
+      if (filteredDevices.length === 0) {
+        wrap.innerHTML = '<div class="empty">ไม่พบข้อมูลอุปกรณ์ที่ค้นหา</div>';
+        return;
+      }
+
       wrap.innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>Device</th>
-              <th>IP</th>
-              <th>Username</th>
-              <th>Password</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${company.devices.map(device => `
-              <tr id="row-${device.id}">
-                <td>${escapeHtml(device.name || "")}</td>
-                <td>${escapeHtml(device.ip || "")}</td>
-                <td>${escapeHtml(device.user || "")}</td>
-                <td>${escapeHtml(device.pass || "")}</td>
-                <td>
-                  <button class="btn-warning" onclick="editDeviceInline('${device.id}')">Edit</button>
-                  <button class="btn-danger" onclick="deleteDevice('${device.id}')">Delete</button>
-                </td>
+        <div class="table-wrap">
+          <table class="device-table">
+            <thead>
+              <tr>
+                <th style="width: 24%;">Device</th>
+                <th style="width: 24%;">IP / URL</th>
+                <th style="width: 20%;">Username</th>
+                <th style="width: 20%;">Password</th>
+                <th style="width: 12%;">Action</th>
               </tr>
-            `).join("")}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              ${filteredDevices.map(device => `
+                <tr id="row-${device.id}">
+                  <td class="device-name-cell">${escapeHtml(device.name || "")}</td>
+                  <td class="ip-cell">${escapeHtml(device.ip || "")}</td>
+                  <td>${escapeHtml(device.user || "")}</td>
+                  <td class="pass-cell">${escapeHtml(device.pass || "")}</td>
+                  <td>
+                    <div class="action-buttons">
+                      <button class="btn-warning" onclick="editDeviceInline('${device.id}')">Edit</button>
+                      <button class="btn-danger" onclick="deleteDevice('${device.id}')">Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
       `;
     }
 
@@ -594,8 +723,10 @@
           <input class="table-input" type="text" id="editPass-${deviceId}" value="${escapeAttr(device.pass || "")}" />
         </td>
         <td>
-          <button class="btn-success" onclick="saveDeviceInline('${deviceId}')">Save</button>
-          <button class="btn-light" onclick="renderDevices()">Cancel</button>
+          <div class="action-buttons">
+            <button class="btn-success" onclick="saveDeviceInline('${deviceId}')">Save</button>
+            <button class="btn-light" onclick="renderDevices()">Cancel</button>
+          </div>
         </td>
       `;
 
@@ -629,48 +760,6 @@
         return;
       }
 
-      await loadData();
-      renderDevices();
-      showToast("แก้ไขอุปกรณ์เรียบร้อย ✅");
-    }
-
-    function editDevice(deviceId) {
-      editDeviceInline(deviceId);
-    }
-
-    async function updateDevice(deviceId) {
-      const name = document.getElementById("deviceNameInput").value.trim();
-      const ip = document.getElementById("deviceIpInput").value.trim();
-      const user = document.getElementById("deviceUserInput").value.trim();
-      const pass = document.getElementById("devicePassInput").value.trim();
-      const err = document.getElementById("deviceError");
-
-      if (!name) {
-        err.classList.remove("hidden");
-        showToast("กรอก Device Name ก่อน ❌", "error");
-        return;
-      }
-
-      err.classList.add("hidden");
-
-      const { error } = await db
-        .from("devices")
-        .update({
-          name: name,
-          ip: ip,
-          username: user,
-          password: pass
-        })
-        .eq("id", deviceId);
-
-      if (error) {
-        console.error(error);
-        showToast("แก้ไขอุปกรณ์ไม่สำเร็จ ❌", "error");
-        return;
-      }
-
-      clearDeviceInputs();
-      resetDeviceButton();
       await loadData();
       renderDevices();
       showToast("แก้ไขอุปกรณ์เรียบร้อย ✅");
