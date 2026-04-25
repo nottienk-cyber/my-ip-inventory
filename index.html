@@ -150,6 +150,7 @@
         </div>
 
         <div id="companyList"></div>
+        <div id="noResults" class="empty hidden">ไม่พบข้อมูลที่ค้นหา</div>
       </div>
     </div>
 
@@ -313,13 +314,21 @@
 
     function renderCompanies() {
       const wrap = document.getElementById("companyList");
+      const query = document.getElementById("searchInput").value.toLowerCase();
 
-      if (companies.length === 0) {
-        wrap.innerHTML = '<div class="empty">ยังไม่มีบริษัท</div>';
+      const filteredCompanies = companies.filter(company => {
+        return company.name.toLowerCase().includes(query);
+      });
+
+      if (filteredCompanies.length === 0) {
+        document.getElementById("noResults").classList.remove("hidden");
+        wrap.innerHTML = "";
         return;
+      } else {
+        document.getElementById("noResults").classList.add("hidden");
       }
 
-      wrap.innerHTML = companies.map(company => `
+      wrap.innerHTML = filteredCompanies.map(company => `
         <div class="company-item">
           <div>
             <div class="company-name">${escapeHtml(company.name)}</div>
@@ -431,25 +440,6 @@
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
-    }
-
-    // ฟังก์ชันค้นหาบริษัท
-    function filterData() {
-      const query = document.getElementById("searchInput").value.toLowerCase();
-      const filteredCompanies = companies.filter(company => {
-        const companyName = company.name.toLowerCase();
-        const devices = company.devices.map(device => device.name.toLowerCase());
-        return companyName.includes(query) || devices.some(device => device.includes(query));
-      });
-
-      renderCompanies(filteredCompanies);
-    }
-
-    // ฟังก์ชันค้นหาบริษัทเมื่อกดปุ่ม
-    function searchCompanies() {
-      const query = document.getElementById("searchInput").value.toLowerCase();
-      const filteredCompanies = companies.filter(company => company.name.toLowerCase().includes(query));
-      renderCompanies(filteredCompanies);
     }
 
     loadData();
