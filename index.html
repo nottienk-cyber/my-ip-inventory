@@ -48,15 +48,6 @@
     .btn-secondary { background: #6b7280; color: #fff; }
     .btn-light { background: #e5e7eb; color: #111827; }
     .btn-warning { background: #d97706; color: #fff; }
-    .row {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .col {
-      flex: 1;
-      min-width: 220px;
-    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -146,11 +137,13 @@
           </div>
         </div>
 
+        <!-- Search Box with Button -->
         <div class="row">
           <div class="col">
-            <input type="text" id="searchInput" placeholder="ค้นหาบริษัท..." oninput="filterData()" />
+            <input type="text" id="searchInput" placeholder="ค้นหาบริษัท..." />
           </div>
           <div>
+            <button class="btn-primary" onclick="searchCompanies()">ค้นหา</button>
             <button class="btn-primary" onclick="addCompany()">Add Company</button>
             <button class="btn-success" onclick="saveCompanies()">Save Companies</button>
           </div>
@@ -449,6 +442,13 @@
         return companyName.includes(query) || devices.some(device => device.includes(query));
       });
 
+      renderCompanies(filteredCompanies);
+    }
+
+    // ฟังก์ชันค้นหาบริษัทเมื่อกดปุ่ม
+    function searchCompanies() {
+      const query = document.getElementById("searchInput").value.toLowerCase();
+      const filteredCompanies = companies.filter(company => company.name.toLowerCase().includes(query));
       renderCompanies(filteredCompanies);
     }
 
