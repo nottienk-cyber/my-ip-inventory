@@ -1,657 +1,324 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IP Customer</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IP Customer</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<!-- Excel Library -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-  <style>
-    * { box-sizing: border-box; }
+<style>
+* { box-sizing: border-box; }
+body { margin:0; font-family:Arial; background:#f4f6f8; }
+.container { max-width:1000px; margin:30px auto; padding:20px; }
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      color: #222;
-    }
+.card {
+  background:#fff;
+  border-radius:12px;
+  padding:20px;
+  box-shadow:0 2px 10px rgba(0,0,0,.08);
+}
 
-    .container {
-      max-width: 1000px;
-      margin: 30px auto;
-      padding: 20px;
-    }
+input {
+  width:100%;
+  padding:10px;
+  margin:6px 0;
+  border:1px solid #ccc;
+  border-radius:8px;
+}
 
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.08);
-      margin-bottom: 20px;
-    }
+button {
+  padding:10px 14px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  margin:5px;
+}
 
-    h1, h2, h3 { margin-top: 0; }
+.btn-primary{background:#2563eb;color:#fff;}
+.btn-success{background:#16a34a;color:#fff;}
+.btn-danger{background:#dc2626;color:#fff;}
+.btn-warning{background:#d97706;color:#fff;}
+.btn-light{background:#e5e7eb;}
 
-    input {
-      width: 100%;
-      padding: 10px 12px;
-      margin: 6px 0 12px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
+.hidden{display:none;}
 
-    button {
-      border: none;
-      border-radius: 8px;
-      padding: 10px 14px;
-      cursor: pointer;
-      margin-right: 8px;
-      margin-bottom: 8px;
-    }
+.company-item{
+  display:flex;
+  justify-content:space-between;
+  padding:10px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  margin-bottom:10px;
+}
 
-    .btn-primary { background: #2563eb; color: #fff; }
-    .btn-danger  { background: #dc2626; color: #fff; }
-    .btn-secondary { background: #6b7280; color: #fff; }
-    .btn-light { background: #e5e7eb; color: #111827; }
-    .btn-warning { background: #d97706; color: #fff; }
-    .btn-success { background: #16a34a; color: #fff; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-      background: #fff;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: left;
-      vertical-align: top;
-    }
-
-    th { background: #f3f4f6; }
-
-    .hidden { display: none; }
-
-    .center-box {
-      max-width: 420px;
-      margin: 80px auto;
-    }
-
-    .company-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      margin-bottom: 10px;
-      background: #fafafa;
-    }
-
-    .company-name {
-      font-weight: bold;
-      font-size: 16px;
-    }
-
-    .muted {
-      color: #666;
-      font-size: 13px;
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .error {
-      color: #dc2626;
-      font-size: 14px;
-      margin-top: -6px;
-      margin-bottom: 12px;
-    }
-
-    .empty {
-      padding: 16px;
-      background: #f9fafb;
-      border: 1px dashed #cbd5e1;
-      border-radius: 10px;
-      color: #475569;
-    }
-
-    #toast {
-      position: fixed;
-      top: 24px;
-      right: 24px;
-      z-index: 9999;
-      min-width: 260px;
-      max-width: 360px;
-      background: #16a34a;
-      color: white;
-      padding: 14px 18px;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,.18);
-      font-weight: bold;
-      opacity: 0;
-      transform: translateY(-20px);
-      pointer-events: none;
-      transition: all .3s ease;
-    }
-
-    #toast.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    #toast.error-toast {
-      background: #dc2626;
-    }
-  </style>
+#toast{
+  position:fixed;
+  top:20px;
+  right:20px;
+  background:#16a34a;
+  color:#fff;
+  padding:12px;
+  border-radius:10px;
+  opacity:0;
+  transition:.3s;
+}
+#toast.show{opacity:1;}
+.error-toast{background:#dc2626;}
+</style>
 </head>
 
 <body>
 
-  <div id="toast"></div>
-
-  <div class="container">
-
-    <!-- LOGIN PAGE -->
-    <div id="loginPage" class="center-box">
-      <div class="card">
-        <h2>IP Customer Login</h2>
-        <input type="text" id="loginUser" placeholder="Username" />
-        <input type="password" id="loginPass" placeholder="Password" />
-        <div id="loginError" class="error hidden">Username หรือ Password ไม่ถูกต้อง</div>
-        <button class="btn-primary" onclick="login()">Login</button>
-      </div>
-    </div>
-
-    <!-- COMPANY PAGE -->
-    <div id="companyPage" class="hidden">
-      <div class="card">
-        <div class="topbar">
-          <div>
-            <h1>Company List</h1>
-            <div class="muted">เพิ่ม / ลบบริษัท / Import Excel ระบบจะบันทึกอัตโนมัติ</div>
-          </div>
-          <div>
-            <button class="btn-secondary" onclick="logout()">Logout</button>
-          </div>
-        </div>
-
-        <input type="text" id="searchInput" placeholder="ค้นหาบริษัท..." onkeyup="renderCompanies()" />
-
-        <button class="btn-primary" onclick="renderCompanies()">ค้นหา</button>
-        <button class="btn-primary" onclick="showAddCompanyPage()">Add Company</button>
-
-        <input type="file" id="excelFile" accept=".xlsx,.xls" class="hidden" onchange="importExcel(event)" />
-        <button class="btn-success" onclick="document.getElementById('excelFile').click()">Import Excel</button>
-
-        <div id="companyList"></div>
-        <div id="noResults" class="empty hidden">ไม่พบข้อมูลที่ค้นหา</div>
-      </div>
-    </div>
-
-    <!-- ADD COMPANY PAGE -->
-    <div id="addCompanyPage" class="hidden">
-      <div class="card center-box">
-        <h2>Add Company</h2>
-        <input type="text" id="companyNameInput" placeholder="Company Name" />
-        <button class="btn-success" onclick="confirmAddCompany()">OK</button>
-        <button class="btn-light" onclick="showCompanyPage()">Cancel</button>
-      </div>
-    </div>
-
-    <!-- DEVICE PAGE -->
-    <div id="devicePage" class="hidden">
-      <div class="card">
-        <div class="topbar">
-          <div>
-            <h2 id="devicePageTitle">Devices</h2>
-            <div class="muted">เพิ่ม / ลบอุปกรณ์ ระบบจะบันทึกอัตโนมัติ</div>
-          </div>
-          <div>
-            <button class="btn-light" onclick="backToCompanies()">Back</button>
-            <button class="btn-secondary" onclick="logout()">Logout</button>
-          </div>
-        </div>
-
-        <input type="text" id="deviceNameInput" placeholder="Device Name" />
-        <input type="text" id="deviceIpInput" placeholder="IP Address" />
-        <input type="text" id="deviceUserInput" placeholder="Username" />
-        <input type="text" id="devicePassInput" placeholder="Password" />
-
-        <div id="deviceError" class="error hidden">กรอก Device / IP / Username / Password ให้ครบก่อน</div>
-
-        <button id="addDeviceBtn" class="btn-primary" onclick="addDevice()">Add Device</button>
-
-        <div id="deviceTableWrap"></div>
-      </div>
-    </div>
-
-  </div>
-
-  <script>
-    const USERS = [
-      { user: "ccadmin", pass: "CC$upp0rt#1" },
-      { user: "admin", pass: "12345678" }
-    ];
-
-    let companies = [];
-    let selectedCompanyId = null;
-
-    function uid() {
-      return Date.now().toString() + Math.floor(Math.random() * 1000).toString();
-    }
-
-    function showToast(message, type = "success") {
-      const toast = document.getElementById("toast");
-
-      toast.innerText = message;
-      toast.className = "";
-
-      if (type === "error") {
-        toast.classList.add("error-toast");
-      }
-
-      toast.classList.add("show");
-
-      setTimeout(() => {
-        toast.classList.remove("show");
-      }, 2200);
-    }
-
-    function loadData() {
-      const data = localStorage.getItem("ip_inventory_data");
-
-      if (data) {
-        companies = JSON.parse(data);
-      } else {
-        companies = [];
-        persist();
-      }
-    }
-
-    function persist() {
-      localStorage.setItem("ip_inventory_data", JSON.stringify(companies));
-    }
-
-    function login() {
-      const u = document.getElementById("loginUser").value.trim();
-      const p = document.getElementById("loginPass").value.trim();
-      const err = document.getElementById("loginError");
-
-      const found = USERS.find(x => x.user === u && x.pass === p);
-
-      if (found) {
-        sessionStorage.setItem("ip_inventory_logged_in", "1");
-        err.classList.add("hidden");
-        showCompanyPage();
-        showToast("เข้าสู่ระบบเรียบร้อย ✅");
-      } else {
-        err.classList.remove("hidden");
-        showToast("Username หรือ Password ไม่ถูกต้อง ❌", "error");
-      }
-    }
-
-    function logout() {
-      sessionStorage.removeItem("ip_inventory_logged_in");
-      selectedCompanyId = null;
-      document.getElementById("loginUser").value = "";
-      document.getElementById("loginPass").value = "";
-      showLoginPage();
-    }
-
-    function isLoggedIn() {
-      return sessionStorage.getItem("ip_inventory_logged_in") === "1";
-    }
-
-    function hideAllPages() {
-      document.getElementById("loginPage").classList.add("hidden");
-      document.getElementById("companyPage").classList.add("hidden");
-      document.getElementById("addCompanyPage").classList.add("hidden");
-      document.getElementById("devicePage").classList.add("hidden");
-    }
-
-    function showLoginPage() {
-      hideAllPages();
-      document.getElementById("loginPage").classList.remove("hidden");
-    }
-
-    function showCompanyPage() {
-      hideAllPages();
-      document.getElementById("companyPage").classList.remove("hidden");
-      renderCompanies();
-    }
-
-    function showAddCompanyPage() {
-      hideAllPages();
-      document.getElementById("addCompanyPage").classList.remove("hidden");
-      document.getElementById("companyNameInput").value = "";
-      document.getElementById("companyNameInput").focus();
-    }
-
-    function confirmAddCompany() {
-      const input = document.getElementById("companyNameInput");
-      const name = input.value.trim();
-
-      if (!name) {
-        showToast("กรุณากรอกชื่อบริษัท ❌", "error");
-        return;
-      }
-
-      companies.push({
-        id: uid(),
-        name: name,
-        devices: []
-      });
-
-      persist();
-      showCompanyPage();
-      showToast("เพิ่มบริษัทเรียบร้อย ✅");
-    }
-
-    function deleteCompany(companyId) {
-      if (!confirm("ลบบริษัทนี้ใช่ไหม?")) return;
-
-      companies = companies.filter(c => c.id !== companyId);
-      persist();
-      renderCompanies();
-      showToast("ลบบริษัทเรียบร้อย ✅");
-    }
-
-    function renderCompanies() {
-      const wrap = document.getElementById("companyList");
-      const query = document.getElementById("searchInput").value.toLowerCase();
-
-      const filteredCompanies = companies.filter(company =>
-        company.name.toLowerCase().includes(query)
-      );
-
-      if (filteredCompanies.length === 0) {
-        document.getElementById("noResults").classList.remove("hidden");
-        wrap.innerHTML = "";
-        return;
-      }
-
-      document.getElementById("noResults").classList.add("hidden");
-
-      wrap.innerHTML = filteredCompanies.map(company => `
-        <div class="company-item">
-          <div>
-            <div class="company-name">${escapeHtml(company.name)}</div>
-            <div class="muted">Devices: ${company.devices.length}</div>
-          </div>
-          <div>
-            <button class="btn-warning" onclick="showDevicePage('${company.id}')">Open</button>
-            <button class="btn-danger" onclick="deleteCompany('${company.id}')">Delete</button>
-          </div>
-        </div>
-      `).join("");
-    }
-
-    function showDevicePage(companyId) {
-      selectedCompanyId = companyId;
-      const company = companies.find(c => c.id === companyId);
-
-      if (!company) return;
-
-      hideAllPages();
-      document.getElementById("devicePage").classList.remove("hidden");
-      document.getElementById("devicePageTitle").innerText = "Devices - " + company.name;
-      document.getElementById("deviceError").classList.add("hidden");
-
-      resetDeviceButton();
-      clearDeviceInputs();
-      renderDevices();
-    }
-
-    function backToCompanies() {
-      showCompanyPage();
-    }
-
-    function addDevice() {
-      const name = document.getElementById("deviceNameInput").value.trim();
-      const ip = document.getElementById("deviceIpInput").value.trim();
-      const user = document.getElementById("deviceUserInput").value.trim();
-      const pass = document.getElementById("devicePassInput").value.trim();
-      const err = document.getElementById("deviceError");
-
-      if (!name || !ip || !user || !pass) {
-        err.classList.remove("hidden");
-        showToast("กรอกข้อมูลอุปกรณ์ให้ครบ ❌", "error");
-        return;
-      }
-
-      err.classList.add("hidden");
-
-      const company = companies.find(c => c.id === selectedCompanyId);
-      if (!company) return;
-
-      company.devices.push({
-        id: uid(),
-        name,
-        ip,
-        user,
-        pass
-      });
-
-      persist();
-      clearDeviceInputs();
-      renderDevices();
-      showToast("เพิ่มอุปกรณ์เรียบร้อย ✅");
-    }
-
-    function clearDeviceInputs() {
-      document.getElementById("deviceNameInput").value = "";
-      document.getElementById("deviceIpInput").value = "";
-      document.getElementById("deviceUserInput").value = "";
-      document.getElementById("devicePassInput").value = "";
-    }
-
-    function deleteDevice(deviceId) {
-      if (!confirm("ลบอุปกรณ์นี้ใช่ไหม?")) return;
-
-      const company = companies.find(c => c.id === selectedCompanyId);
-      if (!company) return;
-
-      company.devices = company.devices.filter(d => d.id !== deviceId);
-
-      persist();
-      renderDevices();
-      showToast("ลบอุปกรณ์เรียบร้อย ✅");
-    }
-
-    function renderDevices() {
-      const wrap = document.getElementById("deviceTableWrap");
-      const company = companies.find(c => c.id === selectedCompanyId);
-
-      if (!company) return;
-
-      if (company.devices.length === 0) {
-        wrap.innerHTML = '<div class="empty">ยังไม่มีอุปกรณ์ในบริษัทนี้</div>';
-        return;
-      }
-
-      wrap.innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>Device</th>
-              <th>IP</th>
-              <th>Username</th>
-              <th>Password</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${company.devices.map(device => `
-              <tr>
-                <td>${escapeHtml(device.name)}</td>
-                <td>${escapeHtml(device.ip)}</td>
-                <td>${escapeHtml(device.user)}</td>
-                <td>${escapeHtml(device.pass)}</td>
-                <td>
-                  <button class="btn-warning" onclick="editDevice('${device.id}')">Edit</button>
-                  <button class="btn-danger" onclick="deleteDevice('${device.id}')">Delete</button>
-                </td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
-      `;
-    }
-
-    function editDevice(deviceId) {
-      const company = companies.find(c => c.id === selectedCompanyId);
-      if (!company) return;
-
-      const device = company.devices.find(d => d.id === deviceId);
-      if (!device) return;
-
-      document.getElementById("deviceNameInput").value = device.name;
-      document.getElementById("deviceIpInput").value = device.ip;
-      document.getElementById("deviceUserInput").value = device.user;
-      document.getElementById("devicePassInput").value = device.pass;
-
-      const btn = document.getElementById("addDeviceBtn");
-      btn.innerText = "Update Device";
-      btn.onclick = function() {
-        updateDevice(deviceId);
-      };
-    }
-
-    function updateDevice(deviceId) {
-      const name = document.getElementById("deviceNameInput").value.trim();
-      const ip = document.getElementById("deviceIpInput").value.trim();
-      const user = document.getElementById("deviceUserInput").value.trim();
-      const pass = document.getElementById("devicePassInput").value.trim();
-      const err = document.getElementById("deviceError");
-
-      if (!name || !ip || !user || !pass) {
-        err.classList.remove("hidden");
-        showToast("กรอกข้อมูลอุปกรณ์ให้ครบ ❌", "error");
-        return;
-      }
-
-      err.classList.add("hidden");
-
-      const company = companies.find(c => c.id === selectedCompanyId);
-      if (!company) return;
-
-      const device = company.devices.find(d => d.id === deviceId);
-      if (!device) return;
-
-      device.name = name;
-      device.ip = ip;
-      device.user = user;
-      device.pass = pass;
-
-      persist();
-      clearDeviceInputs();
-      resetDeviceButton();
-      renderDevices();
-      showToast("แก้ไขอุปกรณ์เรียบร้อย ✅");
-    }
-
-    function resetDeviceButton() {
-      const btn = document.getElementById("addDeviceBtn");
-      btn.innerText = "Add Device";
-      btn.onclick = addDevice;
-    }
-
-    function importExcel(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-
-      reader.onload = function(e) {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: "array" });
-
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-
-        const rows = XLSX.utils.sheet_to_json(sheet);
-
-        if (rows.length === 0) {
-          showToast("ไฟล์ Excel ไม่มีข้อมูล ❌", "error");
-          return;
-        }
-
-        let importCount = 0;
-
-        rows.forEach(row => {
-          const companyName = String(row.Company || "").trim();
-          const deviceName = String(row.Device || "").trim();
-          const ip = String(row.IP || "").trim();
-          const user = String(row.Username || "").trim();
-          const pass = String(row.Password || "").trim();
-
-          if (!companyName || !deviceName || !ip) return;
-
-          let company = companies.find(c =>
-            c.name.toLowerCase() === companyName.toLowerCase()
-          );
-
-          if (!company) {
-            company = {
-              id: uid(),
-              name: companyName,
-              devices: []
-            };
-            companies.push(company);
-          }
-
-          company.devices.push({
-            id: uid(),
-            name: deviceName,
-            ip: ip,
-            user: user,
-            pass: pass
-          });
-
-          importCount++;
-        });
-
-        persist();
-        renderCompanies();
-
-        if (importCount > 0) {
-          showToast("Import Excel เรียบร้อย " + importCount + " รายการ ✅");
-        } else {
-          showToast("Import ไม่สำเร็จ ตรวจสอบหัวตาราง Excel ❌", "error");
-        }
-
-        event.target.value = "";
-      };
-
-      reader.readAsArrayBuffer(file);
-    }
-
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    loadData();
-
-    if (isLoggedIn()) {
-      showCompanyPage();
-    } else {
-      showLoginPage();
-    }
-  </script>
+<div id="toast"></div>
+
+<div class="container">
+
+<!-- LOGIN -->
+<div id="loginPage">
+<div class="card">
+<h2>Login</h2>
+<input id="loginUser" placeholder="Username">
+<input id="loginPass" type="password" placeholder="Password">
+<button class="btn-primary" onclick="login()">Login</button>
+</div>
+</div>
+
+<!-- COMPANY -->
+<div id="companyPage" class="hidden">
+<div class="card">
+
+<h2>Company List</h2>
+
+<input id="searchInput" placeholder="Search..." onkeyup="renderCompanies()">
+
+<button class="btn-primary" onclick="showAddCompanyPage()">Add Company</button>
+
+<input type="file" id="excelFile" class="hidden" onchange="importExcel(event)">
+<button class="btn-success" onclick="excelFile.click()">Import Excel</button>
+
+<div id="companyList"></div>
+
+</div>
+</div>
+
+<!-- ADD COMPANY -->
+<div id="addCompanyPage" class="hidden">
+<div class="card">
+<h3>Add Company</h3>
+<input id="companyNameInput">
+<button class="btn-success" onclick="confirmAddCompany()">OK</button>
+<button onclick="showCompanyPage()">Back</button>
+</div>
+</div>
+
+<!-- DEVICE -->
+<div id="devicePage" class="hidden">
+<div class="card">
+
+<h3 id="deviceTitle"></h3>
+
+<input id="deviceNameInput" placeholder="Device">
+<input id="deviceIpInput" placeholder="IP">
+<input id="deviceUserInput" placeholder="User">
+<input id="devicePassInput" placeholder="Pass">
+
+<button class="btn-primary" onclick="addDevice()">Add Device</button>
+
+<div id="deviceTable"></div>
+
+</div>
+</div>
+
+</div>
+
+<script>
+const USERS=[
+{user:"ccadmin",pass:"CC$upp0rt#1"},
+{user:"admin",pass:"12345678"}
+];
+
+let companies=[];
+let selectedCompanyId=null;
+
+function uid(){return Date.now()+""+Math.random();}
+
+function toast(msg,type="ok"){
+let t=document.getElementById("toast");
+t.innerText=msg;
+t.className="";
+if(type=="error") t.classList.add("error-toast");
+t.classList.add("show");
+setTimeout(()=>t.classList.remove("show"),2000);
+}
+
+function login(){
+let u=loginUser.value;
+let p=loginPass.value;
+let ok=USERS.find(x=>x.user==u&&x.pass==p);
+if(ok){
+sessionStorage.setItem("login","1");
+showCompanyPage();
+toast("Login success");
+}else toast("ผิด","error");
+}
+
+function showCompanyPage(){
+hideAll();
+companyPage.classList.remove("hidden");
+renderCompanies();
+}
+
+function showAddCompanyPage(){
+hideAll();
+addCompanyPage.classList.remove("hidden");
+}
+
+function hideAll(){
+loginPage.classList.add("hidden");
+companyPage.classList.add("hidden");
+addCompanyPage.classList.add("hidden");
+devicePage.classList.add("hidden");
+}
+
+function confirmAddCompany(){
+let name=companyNameInput.value.trim();
+if(!name) return toast("กรอกชื่อ","error");
+
+companies.push({id:uid(),name,devices:[]});
+save();
+showCompanyPage();
+toast("เพิ่มบริษัทแล้ว");
+}
+
+function renderCompanies(){
+let q=searchInput.value.toLowerCase();
+companyList.innerHTML=companies
+.filter(c=>c.name.toLowerCase().includes(q))
+.map(c=>`
+<div class="company-item">
+<div>${c.name}</div>
+<div>
+<button onclick="openCompany('${c.id}')">Open</button>
+<button class="btn-danger" onclick="delCompany('${c.id}')">Del</button>
+</div>
+</div>
+`).join("");
+}
+
+function delCompany(id){
+companies=companies.filter(c=>c.id!=id);
+save();
+renderCompanies();
+toast("ลบแล้ว");
+}
+
+function openCompany(id){
+selectedCompanyId=id;
+let c=companies.find(x=>x.id==id);
+deviceTitle.innerText=c.name;
+hideAll();
+devicePage.classList.remove("hidden");
+renderDevices();
+}
+
+function addDevice(){
+let c=companies.find(x=>x.id==selectedCompanyId);
+
+let d={
+id:uid(),
+name:deviceNameInput.value,
+ip:deviceIpInput.value,
+user:deviceUserInput.value,
+pass:devicePassInput.value
+};
+
+if(!d.name||!d.ip) return toast("กรอกให้ครบ","error");
+
+c.devices.push(d);
+save();
+renderDevices();
+toast("เพิ่ม device แล้ว");
+}
+
+function renderDevices(){
+let c=companies.find(x=>x.id==selectedCompanyId);
+
+deviceTable.innerHTML=`
+<table border=1 width=100%>
+<tr><th>Device</th><th>IP</th><th>Action</th></tr>
+${c.devices.map(d=>`
+<tr>
+<td>${d.name}</td>
+<td>${d.ip}</td>
+<td><button class="btn-danger" onclick="delDevice('${d.id}')">Del</button></td>
+</tr>
+`).join("")}
+</table>
+`;
+}
+
+function delDevice(id){
+let c=companies.find(x=>x.id==selectedCompanyId);
+c.devices=c.devices.filter(d=>d.id!=id);
+save();
+renderDevices();
+}
+
+function save(){
+localStorage.setItem("data",JSON.stringify(companies));
+}
+
+function load(){
+let d=localStorage.getItem("data");
+if(d) companies=JSON.parse(d);
+}
+
+function importExcel(e){
+let file=e.target.files[0];
+if(!file) return;
+
+let reader=new FileReader();
+
+reader.onload=function(evt){
+let data=new Uint8Array(evt.target.result);
+let wb=XLSX.read(data,{type:"array"});
+let rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+
+let count=0;
+
+rows.forEach(r=>{
+let company=r.Customer||r.Company;
+let device=r.Equipment||r.Device;
+let ip=r["IP Address"]||r.IP;
+
+if(!company||!device||!ip) return;
+
+let c=companies.find(x=>x.name==company);
+if(!c){
+c={id:uid(),name:company,devices:[]};
+companies.push(c);
+}
+
+if(c.devices.find(x=>x.ip==ip)) return;
+
+c.devices.push({id:uid(),name:device,ip});
+count++;
+});
+
+save();
+renderCompanies();
+toast("Import "+count+" รายการ");
+};
+
+reader.readAsArrayBuffer(file);
+}
+
+load();
+
+if(sessionStorage.getItem("login")) showCompanyPage();
+</script>
+
 </body>
 </html>
