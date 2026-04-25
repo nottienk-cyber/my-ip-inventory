@@ -442,6 +442,13 @@
         .replaceAll("'", "&#039;");
     }
 
+    // ฟังก์ชันค้นหาบริษัท
+    function searchCompanies() {
+      const query = document.getElementById("searchInput").value.toLowerCase();
+      const filteredCompanies = companies.filter(company => company.name.toLowerCase().includes(query));
+      renderCompanies(filteredCompanies);
+    }
+
     loadData();
 
     if (isLoggedIn()) {
