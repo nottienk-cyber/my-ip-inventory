@@ -48,15 +48,6 @@
     .btn-secondary { background: #6b7280; color: #fff; }
     .btn-light { background: #e5e7eb; color: #111827; }
     .btn-warning { background: #d97706; color: #fff; }
-    .row {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .col {
-      flex: 1;
-      min-width: 220px;
-    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -72,42 +63,14 @@
     th {
       background: #f3f4f6;
     }
-    .hidden { display: none; }
-    .center-box {
-      max-width: 420px;
-      margin: 80px auto;
-    }
-    .company-item {
+    .row {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      margin-bottom: 10px;
-      background: #fafafa;
-    }
-    .company-name {
-      font-weight: bold;
-      font-size: 16px;
-    }
-    .muted {
-      color: #666;
-      font-size: 13px;
-    }
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       gap: 12px;
       flex-wrap: wrap;
     }
-    .error {
-      color: #dc2626;
-      font-size: 14px;
-      margin-top: -6px;
-      margin-bottom: 12px;
+    .col {
+      flex: 1;
+      min-width: 220px;
     }
     .empty {
       padding: 16px;
@@ -116,10 +79,22 @@
       border-radius: 10px;
       color: #475569;
     }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .muted {
+      color: #666;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
+
     <!-- LOGIN PAGE -->
     <div id="loginPage" class="center-box">
       <div class="card">
@@ -141,14 +116,14 @@
             <div class="muted">เพิ่ม / ลบบริษัท แล้วกด Save</div>
           </div>
           <div>
-            <input type="text" id="searchCompanyInput" placeholder="Search Companies" oninput="searchCompanies()" />
             <button class="btn-secondary" onclick="logout()">Logout</button>
           </div>
         </div>
 
+        <!-- Search Box -->
         <div class="row">
           <div class="col">
-            <input type="text" id="companyNameInput" placeholder="ชื่อบริษัท" />
+            <input type="text" id="searchInput" placeholder="ค้นหาบริษัท..." oninput="filterData()" />
           </div>
           <div>
             <button class="btn-primary" onclick="addCompany()">Add Company</button>
@@ -199,7 +174,7 @@
     </div>
 
   </div>
-  
+
   <script>
     const APP_LOGIN_USER = "admin";
     const APP_LOGIN_PASS = "1234";
@@ -428,3 +403,25 @@
             `).join("")}
           </tbody>
         </table>
+      `;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    loadData();
+
+    if (isLoggedIn()) {
+      showCompanyPage();
+    } else {
+      showLoginPage();
+    }
+  </script>
+</body>
+</html>
