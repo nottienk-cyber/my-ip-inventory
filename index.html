@@ -570,3 +570,8 @@
       wrap.innerHTML = filteredCompanies.map(company => `
         <div class="company-item">
           <div>
+            <div class="company-name">${escapeHtml(company.name)}</div>
+            <div class="muted">Devices: ${company.devices.length}</div>
+          </div>
+          <div>
+            <button class="btn-warning" onclick="showDevicePage
