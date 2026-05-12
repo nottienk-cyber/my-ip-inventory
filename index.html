@@ -566,3 +566,7 @@
       }
 
       document.getElementById("noResults").classList.add("hidden");
+
+      wrap.innerHTML = filteredCompanies.map(company => `
+        <div class="company-item">
+          <div>
