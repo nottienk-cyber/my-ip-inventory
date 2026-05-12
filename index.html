@@ -19,11 +19,24 @@
     }
 
     * { box-sizing: border-box; font-family: 'Inter', 'Kanit', sans-serif; }
-    body { background-color: var(--bg); color: var(--text); margin: 0; min-height: 100vh; }
+    body { background-color: var(--bg); color: var(--text); margin: 0; min-height: 100vh; position: relative; }
     .hidden { display: none !important; }
     
+    /* --- LOGO STYLING --- */
+    .top-logo {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 500;
+    }
+    .top-logo img {
+      height: 60px; /* ปรับขนาดความสูงตามความเหมาะสม */
+      width: auto;
+      object-fit: contain;
+    }
+
     .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
-    .card { background: var(--card); border-radius: 16px; padding: 30px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid var(--border); }
+    .card { background: var(--card); border-radius: 16px; padding: 30px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid var(--border); position: relative; }
 
     /* --- LOGIN UI --- */
     .login-box { position: relative; width: 100%; }
@@ -68,9 +81,19 @@
 
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .modal-content { background: white; padding: 30px; border-radius: 20px; width: 450px; max-width: 95%; }
+
+    /* Responsive adjustments for Logo */
+    @media (max-width: 768px) {
+      .top-logo img { height: 40px; }
+      .container { margin-top: 80px; }
+    }
   </style>
 </head>
 <body>
+
+<div class="top-logo">
+  <img src="https://axluexlgltkrmnytswwq.supabase.co/storage/v1/object/public/assets/cc-logo.png" alt="CC Logo">
+</div>
 
 <div id="toast">แจ้งเตือน</div>
 
@@ -78,7 +101,7 @@
   
   <div id="loginPage" class="card" style="max-width: 400px; margin: 100px auto; text-align: center;">
     <h2 style="margin-bottom: 10px;">Inventory Login</h2>
-    <p style="color: var(--muted); margin-bottom: 25px;">Management System</p>
+    <p style="color: var(--muted); margin-bottom: 25px;">CC (Thailand) Co.,Ltd.</p>
     <input type="text" id="loginUser" class="form-input" placeholder="Username">
     
     <div class="login-box">
@@ -163,6 +186,9 @@
 </div>
 
 <script>
+  // **สำคัญ**: คุณต้องอัปโหลดรูป Logo ไปไว้ใน Supabase Storage หรือ Link ที่เข้าถึงได้ 
+  // แล้วเอา URL มาใส่ใน <img src="..."> ด้านบนครับ
+  
   const SUPABASE_URL = "https://axluexlgltkrmnytswwq.supabase.co";
   const SUPABASE_KEY = "sb_publishable_qgjQeHyWCoBQ2ruSu5vfAg_MagAFIul";
   const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -170,17 +196,11 @@
   let allCompanies = [], allDevices = [], selectedCompany = null, editingDeviceId = null;
   let currentPage = 1, rowsPerPage = 10;
 
-  // --- LOGIN PAGE LOGIC ---
   function toggleLoginPass() {
     const p = document.getElementById("loginPass");
     const b = document.querySelector(".toggle-password");
-    if (p.type === "password") {
-      p.type = "text";
-      b.innerText = "🕶️";
-    } else {
-      p.type = "password";
-      b.innerText = "👁️";
-    }
+    if (p.type === "password") { p.type = "text"; b.innerText = "🕶️"; } 
+    else { p.type = "password"; b.innerText = "👁️"; }
   }
 
   function login() {
@@ -194,7 +214,6 @@
 
   function logout() { sessionStorage.clear(); window.location.reload(); }
 
-  // --- NAVIGATION & LOADING ---
   function showPage(pageId) {
     document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
     document.getElementById(pageId).classList.remove('hidden');
@@ -223,8 +242,8 @@
     renderDevices();
   }
 
-  // --- RENDER & UTILS ---
   async function copyToClipboard(text) {
+    if(!text || text === '-') return;
     await navigator.clipboard.writeText(text);
     showToast("คัดลอกแล้ว! ✅");
   }
@@ -277,7 +296,6 @@
   function changePage(dir) { currentPage += dir; renderDevices(); }
   function changeRowsPerPage() { rowsPerPage = document.getElementById("rowsPerPage").value; currentPage = 1; renderDevices(); }
 
-  // --- CRUD ---
   function openModal(id = null) {
     editingDeviceId = id;
     if(id) {
