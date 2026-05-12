@@ -1,20 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IP Customer - Modern UI</title>
+  <title>IP Customer - NESDC Management</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
   <style>
     :root {
       --primary: #2563eb;
+      --primary-hover: #1d4ed8;
       --bg-body: #f8fafc;
       --text-main: #1e293b;
       --text-muted: #64748b;
-      --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --border-color: #e2e8f0;
+      --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
 
     * { box-sizing: border-box; }
@@ -22,7 +25,7 @@
     body {
       margin: 0;
       font-family: 'Inter', 'Kanit', sans-serif;
-      background: var(--bg-body);
+      background-color: var(--bg-body);
       color: var(--text-main);
       -webkit-font-smoothing: antialiased;
     }
@@ -34,41 +37,41 @@
     }
 
     .card {
-      background: #ffffff;
+      background: #fff;
       border-radius: 16px;
       padding: 32px;
       box-shadow: var(--card-shadow);
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border-color);
     }
 
-    /* Top Navigation Section */
+    /* Top Bar & Titles */
     .topbar {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 30px;
+      margin-bottom: 24px;
     }
 
-    h2 { font-size: 28px; font-weight: 600; margin-bottom: 4px; letter-spacing: -0.02em; }
-    .muted { color: var(--text-muted); font-size: 14px; }
+    h1, h2 { margin: 0; font-weight: 600; color: #0f172a; }
+    .subtitle { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
 
-    /* Buttons Style */
+    /* Buttons */
     button {
       font-family: inherit;
       font-weight: 500;
       border-radius: 10px;
-      padding: 10px 18px;
+      padding: 10px 20px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
       border: none;
       display: inline-flex;
       align-items: center;
       gap: 8px;
     }
 
-    .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(37,99,235,0.3); }
-
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+    
     .btn-light { background: #f1f5f9; color: #475569; }
     .btn-light:hover { background: #e2e8f0; }
 
@@ -78,58 +81,53 @@
     .btn-warning { background: #fef3c7; color: #d97706; }
     .btn-warning:hover { background: #fde68a; }
 
-    /* Search & Tools */
-    .search-box {
+    /* Inputs */
+    input.form-control {
       width: 100%;
-      max-width: 400px;
       padding: 12px 16px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border-color);
       border-radius: 12px;
       font-size: 15px;
-      transition: border-color 0.2s;
       outline: none;
+      transition: border-color 0.2s;
     }
-    .search-box:focus { border-color: var(--primary); background: #fff; }
+    input.form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
 
-    /* Modern Table Design */
-    .table-wrap {
+    /* Modern Table */
+    .table-container {
       margin-top: 24px;
-      overflow-x: auto;
-      border: 1px solid #f1f5f9;
+      border: 1px solid var(--border-color);
       border-radius: 12px;
+      overflow: hidden;
     }
 
-    .device-table {
+    table {
       width: 100%;
       border-collapse: collapse;
       background: white;
-    }
-
-    .device-table th {
-      background: #f8fafc;
-      padding: 16px;
-      font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-      border-bottom: 2px solid #f1f5f9;
       text-align: left;
     }
 
-    .device-table td {
-      padding: 18px 16px;
-      border-bottom: 1px solid #f1f5f9;
-      vertical-align: middle;
-      font-size: 15px;
+    th {
+      background: #f8fafc;
+      padding: 16px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 2px solid var(--border-color);
     }
 
-    .device-table tr:last-child td { border-bottom: none; }
-    .device-table tr:hover { background: #fafafa; }
+    td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 14px;
+    }
 
-    /* Style for sensitive data */
-    .code-badge {
-      font-family: 'JetBrains Mono', 'Consolas', monospace;
+    tr:hover { background: #f9fafb; }
+
+    .badge-code {
+      font-family: 'Consolas', monospace;
       background: #f1f5f9;
       padding: 4px 8px;
       border-radius: 6px;
@@ -138,96 +136,220 @@
     }
 
     .device-name { font-weight: 600; color: #0f172a; }
-    .action-group { display: flex; gap: 8px; }
 
-    /* Tooltip-like count box */
-    .count-badge {
-      background: #e0e7ff;
-      color: #4338ca;
-      padding: 4px 12px;
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-card {
+      width: 90%;
+      max-width: 450px;
+      background: white;
+      padding: 30px;
       border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
+      animation: modalSlide 0.3s ease-out;
+    }
+
+    @keyframes modalSlide {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
 
     .hidden { display: none !important; }
+
+    #toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      padding: 16px 24px;
+      background: #0f172a;
+      color: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+      transform: translateY(100px);
+      transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      z-index: 2000;
+    }
+    #toast.show { transform: translateY(0); }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <div id="devicePage" class="card">
-    <div class="topbar">
-      <div>
-        <h2 id="devicePageTitle">Devices - NESDC</h2>
-        <div class="muted">จัดการอุปกรณ์ภายในบริษัทนี้</div>
+  <div id="toast">ข้อความแจ้งเตือน</div>
+
+  <div id="addDeviceModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h2 style="margin-bottom: 8px;">เพิ่มอุปกรณ์ใหม่</h2>
+      <p class="subtitle" style="margin-bottom: 24px;">กรอกข้อมูลรายละเอียดอุปกรณ์เพื่อบันทึกลงระบบ</p>
+      
+      <label class="subtitle">ชื่ออุปกรณ์ (Device Name)</label>
+      <input type="text" id="deviceNameInput" class="form-control" style="margin-bottom: 16px;" placeholder="เช่น Core Switch 01" />
+      
+      <label class="subtitle">IP Address / URL</label>
+      <input type="text" id="deviceIpInput" class="form-control" style="margin-bottom: 16px;" placeholder="192.168.x.x" />
+      
+      <label class="subtitle">Username</label>
+      <input type="text" id="deviceUserInput" class="form-control" style="margin-bottom: 16px;" placeholder="admin" />
+      
+      <label class="subtitle">Password</label>
+      <input type="text" id="devicePassInput" class="form-control" style="margin-bottom: 24px;" placeholder="••••••••" />
+
+      <div style="display: flex; gap: 12px;">
+        <button class="btn-light" style="flex: 1;" onclick="closeAddDeviceModal()">ยกเลิก</button>
+        <button class="btn-primary" style="flex: 1; justify-content: center;" onclick="addDevice()">บันทึกข้อมูล</button>
       </div>
-      <div class="action-group">
-        <button class="btn-light" onclick="history.back()">Back</button>
-        <button class="btn-light" style="background: #334155; color: white;">Logout</button>
-      </div>
-    </div>
-
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-      <button class="btn-primary" onclick="openAddDeviceModal()">
-        <span>+</span> Add New Device
-      </button>
-      <div class="count-badge" id="deviceCount">Devices: 161 / 161</div>
-    </div>
-
-    <input type="text" class="search-box" placeholder="ค้นหาชื่อ, IP, User..." onkeyup="renderDevices()">
-
-    <div class="table-wrap">
-      <table class="device-table">
-        <thead>
-          <tr>
-            <th style="width: 30%;">Device</th>
-            <th style="width: 25%;">IP / URL</th>
-            <th style="width: 15%;">Username</th>
-            <th style="width: 15%;">Password</th>
-            <th style="width: 15%;">Action</th>
-          </tr>
-        </thead>
-        <tbody id="deviceTableBody">
-          <tr>
-            <td>
-              <div class="device-name">Firewall (Palo)</div>
-            </td>
-            <td><span class="code-badge">https://172.30.99.180</span></td>
-            <td class="muted">one</td>
-            <td><span class="code-badge">Nesdc@g0th</span></td>
-            <td>
-              <div class="action-group">
-                <button class="btn-warning" style="padding: 6px 12px; font-size: 13px;">Edit</button>
-                <button class="btn-danger" style="padding: 6px 12px; font-size: 13px;">Delete</button>
-              </div>
-            </td>
-          </tr>
-          </tbody>
-      </table>
     </div>
   </div>
-</div>
 
-<script>
-  // ตรงส่วน Render ใน JavaScript ของคุณ ให้แก้ส่วน .map() ให้ใช้ class ใหม่แบบนี้ครับ:
-  /*
-  wrap.innerHTML = filtered.map(d => `
-    <tr>
-      <td><div class="device-name">${escapeHtml(d.name)}</div></td>
-      <td><span class="code-badge">${escapeHtml(d.ip)}</span></td>
-      <td class="muted">${escapeHtml(d.user)}</td>
-      <td><span class="code-badge">${escapeHtml(d.pass)}</span></td>
-      <td>
-        <div class="action-group">
-          <button class="btn-warning" style="padding: 6px 12px; font-size: 13px;" onclick="editDeviceInline('${d.id}')">Edit</button>
-          <button class="btn-danger" style="padding: 6px 12px; font-size: 13px;" onclick="deleteDevice('${d.id}')">Delete</button>
+  <div class="container">
+    <div id="devicePage" class="card">
+      <div class="topbar">
+        <div>
+          <h2 id="devicePageTitle">Devices - NESDC</h2>
+          <p class="subtitle">จัดการและบันทึกข้อมูลอุปกรณ์โครงข่ายภายในองค์กร</p>
         </div>
-      </td>
-    </tr>
-  `).join("");
-  */
-</script>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-light" onclick="history.back()">Back</button>
+          <button class="btn-light" style="background: #334155; color: white;">Logout</button>
+        </div>
+      </div>
 
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+        <button class="btn-primary" onclick="openAddDeviceModal()">
+          <span style="font-size: 18px;">+</span> เพิ่มอุปกรณ์
+        </button>
+        <div style="display: flex; align-items: center; gap: 12px; flex: 1; max-width: 400px;">
+          <input type="text" id="deviceSearchInput" class="form-control" placeholder="ค้นหาชื่อ, IP, หรือ Username..." onkeyup="renderDevices()">
+        </div>
+        <div class="subtitle" style="font-weight: 500;">ทั้งหมด: <span id="deviceCount" style="color: var(--primary);">0</span> รายการ</div>
+      </div>
+
+      <div class="table-container">
+        <table id="deviceTable">
+          <thead>
+            <tr>
+              <th style="width: 25%;">Device Name</th>
+              <th style="width: 20%;">IP / URL</th>
+              <th style="width: 15%;">Username</th>
+              <th style="width: 15%;">Password</th>
+              <th style="width: 20%; text-align: center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="deviceTableBody">
+            </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Configuration & Supabase Init ---
+    const SUPABASE_URL = "https://axluexlgltkrmnytswwq.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_qgjQeHyWCoBQ2ruSu5vfAg_MagAFIul";
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentDevices = [];
+    let selectedCompanyId = "NESDC_ID_HERE"; // ปรับตาม id จริงของบริษัท
+
+    // --- Modal Logic ---
+    function openAddDeviceModal() {
+      document.getElementById("addDeviceModal").classList.remove("hidden");
+      document.getElementById("deviceNameInput").focus();
+    }
+
+    function closeAddDeviceModal() {
+      document.getElementById("addDeviceModal").classList.add("hidden");
+      ["deviceNameInput", "deviceIpInput", "deviceUserInput", "devicePassInput"].forEach(id => {
+        document.getElementById(id).value = "";
+      });
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.innerText = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 3000);
+    }
+
+    // --- Data Logic ---
+    async function loadDevices() {
+      // ตัวอย่างการดึงข้อมูล (ปรับ query ตามโครงสร้างจริง)
+      const { data, error } = await db.from("devices").select("*").order('created_at', { ascending: false });
+      if (error) return console.error(error);
+      currentDevices = data;
+      renderDevices();
+    }
+
+    function renderDevices() {
+      const tbody = document.getElementById("deviceTableBody");
+      const query = document.getElementById("deviceSearchInput").value.toLowerCase();
+      
+      const filtered = currentDevices.filter(d => 
+        d.name?.toLowerCase().includes(query) || 
+        d.ip?.toLowerCase().includes(query) || 
+        d.username?.toLowerCase().includes(query)
+      );
+
+      document.getElementById("deviceCount").innerText = filtered.length;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: #94a3b8;">ไม่พบข้อมูลอุปกรณ์</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(d => `
+        <tr>
+          <td><div class="device-name">${d.name || '-'}</div></td>
+          <td><span class="badge-code">${d.ip || '-'}</span></td>
+          <td style="color: #64748b;">${d.username || '-'}</td>
+          <td><span class="badge-code">${d.password || '-'}</span></td>
+          <td style="text-align: center;">
+            <button class="btn-warning" style="padding: 6px 12px; font-size: 13px;" onclick="editDevice('${d.id}')">Edit</button>
+            <button class="btn-danger" style="padding: 6px 12px; font-size: 13px;" onclick="deleteDevice('${d.id}')">Delete</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    async function addDevice() {
+      const name = document.getElementById("deviceNameInput").value;
+      if (!name) return alert("กรุณาระบุชื่ออุปกรณ์");
+
+      const newDevice = {
+        name: name,
+        ip: document.getElementById("deviceIpInput").value,
+        username: document.getElementById("deviceUserInput").value,
+        password: document.getElementById("devicePassInput").value,
+        // company_id: selectedCompanyId
+      };
+
+      const { error } = await db.from("devices").insert([newDevice]);
+      if (!error) {
+        showToast("เพิ่มอุปกรณ์เรียบร้อยแล้ว ✅");
+        closeAddDeviceModal();
+        loadDevices();
+      }
+    }
+
+    async function deleteDevice(id) {
+      if (confirm("ยืนยันการลบอุปกรณ์นี้หรือไม่?")) {
+        const { error } = await db.from("devices").delete().eq("id", id);
+        if (!error) {
+          showToast("ลบข้อมูลสำเร็จ");
+          loadDevices();
+        }
+      }
+    }
+
+    // Initial Load
+    loadDevices();
+  </script>
 </body>
 </html>
