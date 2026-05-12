@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IP Customer</title>
+  <title>IP Customer - Device Management</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -13,7 +13,7 @@
 
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #f4f6f8;
       color: #222;
     }
@@ -57,7 +57,10 @@
       margin-right: 8px;
       margin-bottom: 8px;
       font-size: 14px;
+      transition: opacity 0.2s;
     }
+
+    button:hover { opacity: 0.9; }
 
     .btn-primary { background: #2563eb; color: #fff; }
     .btn-danger  { background: #dc2626; color: #fff; }
@@ -66,7 +69,29 @@
     .btn-warning { background: #d97706; color: #fff; }
     .btn-success { background: #16a34a; color: #fff; }
 
-    .hidden { display: none; }
+    .hidden { display: none !important; }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      width: 90%;
+      max-width: 500px;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
 
     .center-box {
       max-width: 420px;
@@ -85,20 +110,8 @@
       background: #fafafa;
     }
 
-    .company-item:hover {
-      background: #f8fafc;
-      border-color: #cbd5e1;
-    }
-
-    .company-name {
-      font-weight: bold;
-      font-size: 16px;
-    }
-
-    .muted {
-      color: #666;
-      font-size: 13px;
-    }
+    .company-name { font-weight: bold; font-size: 16px; }
+    .muted { color: #666; font-size: 13px; }
 
     .topbar {
       display: flex;
@@ -106,14 +119,10 @@
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
+      margin-bottom: 15px;
     }
 
-    .error {
-      color: #dc2626;
-      font-size: 14px;
-      margin-top: -6px;
-      margin-bottom: 12px;
-    }
+    .error { color: #dc2626; font-size: 14px; margin-top: -6px; margin-bottom: 12px; }
 
     .empty {
       padding: 16px;
@@ -122,15 +131,14 @@
       border-radius: 10px;
       color: #475569;
       margin-top: 12px;
+      text-align: center;
     }
 
     #toast {
       position: fixed;
-      top: 24px;
-      right: 24px;
+      top: 24px; right: 24px;
       z-index: 9999;
       min-width: 260px;
-      max-width: 360px;
       background: #16a34a;
       color: white;
       padding: 14px 18px;
@@ -139,42 +147,22 @@
       font-weight: bold;
       opacity: 0;
       transform: translateY(-20px);
-      pointer-events: none;
       transition: all .3s ease;
+      pointer-events: none;
     }
 
-    #toast.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    #toast.error-toast {
-      background: #dc2626;
-    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.error-toast { background: #dc2626; }
 
     .device-tools {
       display: flex;
       gap: 10px;
       align-items: center;
-      margin: 18px 0 10px;
+      margin: 10px 0;
       flex-wrap: wrap;
     }
 
-    .device-search {
-      flex: 1;
-      min-width: 260px;
-      margin: 0;
-    }
-
-    .device-count {
-      background: #eef2ff;
-      color: #1e40af;
-      padding: 9px 12px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: bold;
-      white-space: nowrap;
-    }
+    .device-search { flex: 1; min-width: 260px; margin: 0; }
 
     .table-wrap {
       width: 100%;
@@ -182,80 +170,25 @@
       border-radius: 12px;
       border: 1px solid #e5e7eb;
       background: #fff;
-      margin-top: 10px;
     }
 
     .device-table {
       width: 100%;
-      min-width: 900px;
+      min-width: 800px;
       border-collapse: collapse;
     }
 
-    .device-table th {
-      background: #f8fafc;
-      color: #111827;
-      font-weight: bold;
-      font-size: 14px;
-      border-bottom: 1px solid #e5e7eb;
+    .device-table th, .device-table td {
       padding: 12px;
       text-align: left;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-
-    .device-table td {
       border-bottom: 1px solid #e5e7eb;
-      padding: 12px;
-      vertical-align: top;
     }
 
-    .device-table tr:hover {
-      background: #f9fafb;
-    }
+    .device-table th { background: #f8fafc; font-size: 14px; }
+    .device-table tr:hover { background: #f9fafb; }
 
-    .device-name-cell {
-      font-weight: bold;
-      color: #111827;
-      max-width: 240px;
-      word-break: break-word;
-    }
-
-    .ip-cell {
-      font-family: Consolas, monospace;
-      color: #0f172a;
-      word-break: break-word;
-    }
-
-    .pass-cell {
-      font-family: Consolas, monospace;
-      color: #374151;
-      word-break: break-word;
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: 8px;
-      flex-wrap: nowrap;
-      align-items: center;
-      white-space: nowrap;
-    }
-
-    .action-buttons button {
-      margin: 0;
-    }
-
-    .device-table th:last-child,
-    .device-table td:last-child {
-      min-width: 160px;
-      white-space: nowrap;
-    }
-
-    .table-input {
-      width: 100%;
-      margin: 0;
-      padding: 8px 10px;
-    }
+    .ip-cell, .pass-cell { font-family: Consolas, monospace; font-size: 13px; }
+    .table-input { width: 100%; margin: 0; padding: 6px 8px; }
   </style>
 </head>
 
@@ -263,36 +196,50 @@
 
   <div id="toast"></div>
 
+  <div id="addDeviceModal" class="modal-overlay hidden">
+    <div class="card modal-content">
+      <h2>Add New Device</h2>
+      <label class="muted">Device Name</label>
+      <input type="text" id="deviceNameInput" placeholder="e.g. Core Switch" />
+      <label class="muted">IP / URL</label>
+      <input type="text" id="deviceIpInput" placeholder="192.168.1.1" />
+      <label class="muted">Username</label>
+      <input type="text" id="deviceUserInput" placeholder="admin" />
+      <label class="muted">Password</label>
+      <input type="text" id="devicePassInput" placeholder="password" />
+      
+      <div id="deviceError" class="error hidden">กรุณาระบุ Device Name</div>
+      
+      <div style="display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn-light" onclick="closeAddDeviceModal()">Cancel</button>
+        <button class="btn-primary" onclick="addDevice()">Save Device</button>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
 
-    <!-- LOGIN PAGE -->
     <div id="loginPage" class="center-box">
       <div class="card">
         <h2>IP Customer Login</h2>
         <input type="text" id="loginUser" placeholder="Username" />
         <input type="password" id="loginPass" placeholder="Password" />
         <div id="loginError" class="error hidden">Username หรือ Password ไม่ถูกต้อง</div>
-        <button class="btn-primary" onclick="login()">Login</button>
+        <button class="btn-primary" style="width: 100%;" onclick="login()">Login</button>
       </div>
     </div>
 
-    <!-- COMPANY PAGE -->
     <div id="companyPage" class="hidden">
       <div class="card">
         <div class="topbar">
-          <div>
-            <h1>Company List</h1>
-            <div class="muted">ข้อมูลบันทึกลง Supabase เปิดจากเครื่องอื่นจะเห็นข้อมูลเดียวกัน</div>
-          </div>
-          <div>
-            <button class="btn-secondary" onclick="logout()">Logout</button>
-          </div>
+          <h1>Company List</h1>
+          <button class="btn-secondary" onclick="logout()">Logout</button>
         </div>
 
-        <input type="text" id="searchInput" placeholder="ค้นหาบริษัท..." onkeyup="renderCompanies()" />
-
-        <button class="btn-primary" onclick="renderCompanies()">ค้นหา</button>
-        <button class="btn-primary" onclick="showAddCompanyPage()">Add Company</button>
+        <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+          <input type="text" id="searchInput" style="margin:0" placeholder="ค้นหาบริษัท..." onkeyup="renderCompanies()" />
+          <button class="btn-primary" style="margin:0" onclick="showAddCompanyPage()">+ Add Company</button>
+        </div>
 
         <input type="file" id="excelFile" accept=".xlsx,.xls" class="hidden" onchange="importExcel(event)" />
         <button class="btn-success" onclick="document.getElementById('excelFile').click()">Import Excel</button>
@@ -302,7 +249,6 @@
       </div>
     </div>
 
-    <!-- ADD COMPANY PAGE -->
     <div id="addCompanyPage" class="hidden">
       <div class="card center-box">
         <h2>Add Company</h2>
@@ -312,13 +258,12 @@
       </div>
     </div>
 
-    <!-- DEVICE PAGE -->
     <div id="devicePage" class="hidden">
       <div class="card">
         <div class="topbar">
           <div>
-            <h2 id="devicePageTitle">Devices</h2>
-            <div class="muted">เพิ่ม / ลบ / แก้ไขอุปกรณ์ ระบบจะบันทึกอัตโนมัติ</div>
+            <h2 id="devicePageTitle" style="margin:0">Devices</h2>
+            <div class="muted">จัดการอุปกรณ์ในบริษัทนี้</div>
           </div>
           <div>
             <button class="btn-light" onclick="backToCompanies()">Back</button>
@@ -326,40 +271,16 @@
           </div>
         </div>
 
-        <input type="text" id="deviceNameInput" placeholder="Device Name" />
-        <input type="text" id="deviceIpInput" placeholder="IP Address" />
-        <input type="text" id="deviceUserInput" placeholder="Username" />
-        <input type="text" id="devicePassInput" placeholder="Password" />
-
-        <div id="deviceError" class="error hidden">กรอก Device Name อย่างน้อย 1 ช่อง</div>
-
-        <button id="addDeviceBtn" class="btn-primary" onclick="addDevice()">Add Device</button>
+        <div style="margin-bottom: 15px;">
+          <button class="btn-primary" onclick="openAddDeviceModal()">+ Add New Device</button>
+        </div>
 
         <div class="device-tools">
-          <input
-            type="text"
-            id="deviceSearchInput"
-            class="device-search"
-            placeholder="ค้นหา Device / IP / Username / Password..."
-            onkeyup="renderDevices()"
-          />
-          <div id="deviceCount" class="device-count">Devices: 0</div>
+          <input type="text" id="deviceSearchInput" class="device-search" placeholder="ค้นหาชื่อ, IP, User..." onkeyup="renderDevices()" />
+          <div id="deviceCount" class="muted" style="font-weight:bold">Devices: 0</div>
         </div>
 
         <div id="deviceTableWrap"></div>
-      </div>
-    </div>
-
-    <!-- ADD DEVICE PAGE -->
-    <div id="addDevicePage" class="hidden">
-      <div class="card center-box">
-        <h2>Add Device</h2>
-        <input type="text" id="deviceNameInput" placeholder="Device Name" />
-        <input type="text" id="deviceIpInput" placeholder="IP Address" />
-        <input type="text" id="deviceUserInput" placeholder="Username" />
-        <input type="text" id="devicePassInput" placeholder="Password" />
-        <button class="btn-success" onclick="confirmAddDevice()">OK</button>
-        <button class="btn-light" onclick="backToDevices()">Cancel</button>
       </div>
     </div>
 
@@ -378,200 +299,284 @@
     let companies = [];
     let selectedCompanyId = null;
 
-    function showToast(message, type = "success") {
-      const toast = document.getElementById("toast");
-
-      toast.innerText = message;
-      toast.className = "";
-
-      if (type === "error") {
-        toast.classList.add("error-toast");
-      }
-
-      toast.classList.add("show");
-
-      setTimeout(() => {
-        toast.classList.remove("show");
-      }, 2200);
+    // --- Navigation Logic ---
+    function pushAppState(page, companyId = null) {
+      const hash = companyId ? `#${page}-${companyId}` : `#${page}`;
+      history.pushState({ page, companyId }, "", hash);
     }
 
-    async function loadData() {
-      const { data, error } = await db
-        .from("companies")
-        .select(`
-          id,
-          name,
-          created_at,
-          devices (
-            id,
-            name,
-            ip,
-            username,
-            password,
-            created_at
-          )
-        `)
-        .order("created_at", { ascending: true });
-
-      if (error) {
-        console.error(error);
-        showToast("โหลดข้อมูลจาก Supabase ไม่สำเร็จ ❌", "error");
-        companies = [];
+    window.addEventListener("popstate", (e) => {
+      if (!e.state) {
+        isLoggedIn() ? showCompanyPage(false) : showLoginPage(false);
         return;
       }
+      if (e.state.page === "login") showLoginPage(false);
+      if (e.state.page === "company") showCompanyPage(false);
+      if (e.state.page === "device") showDevicePage(e.state.companyId, false);
+    });
 
-      companies = (data || []).map(company => ({
-        id: company.id,
-        name: company.name,
-        devices: (company.devices || []).map(device => ({
-          id: device.id,
-          name: device.name || "",
-          ip: device.ip || "",
-          user: device.username || "",
-          pass: device.password || ""
+    // --- UI Helpers ---
+    function showToast(msg, type = "success") {
+      const t = document.getElementById("toast");
+      t.innerText = msg;
+      t.className = type === "error" ? "error-toast show" : "show";
+      setTimeout(() => t.classList.remove("show"), 2500);
+    }
+
+    function hideAllPages() {
+      ['loginPage', 'companyPage', 'addCompanyPage', 'devicePage'].forEach(id => {
+        document.getElementById(id).classList.add("hidden");
+      });
+      closeAddDeviceModal();
+    }
+
+    // --- Modal Logic ---
+    function openAddDeviceModal() {
+      document.getElementById("addDeviceModal").classList.remove("hidden");
+      document.getElementById("deviceNameInput").focus();
+    }
+
+    function closeAddDeviceModal() {
+      document.getElementById("addDeviceModal").classList.add("hidden");
+      document.getElementById("deviceError").classList.add("hidden");
+      clearDeviceInputs();
+    }
+
+    // --- Core Data Logic ---
+    async function loadData() {
+      const { data, error } = await db.from("companies").select(`id, name, devices(id, name, ip, username, password)`);
+      if (error) return showToast("Error loading data", "error");
+      
+      companies = (data || []).map(c => ({
+        id: c.id, name: c.name,
+        devices: (c.devices || []).map(d => ({
+          id: d.id, name: d.name || "", ip: d.ip || "", user: d.username || "", pass: d.password || ""
         }))
       }));
     }
 
+    // --- Page Actions ---
     async function login() {
       const u = document.getElementById("loginUser").value.trim();
       const p = document.getElementById("loginPass").value.trim();
-      const err = document.getElementById("loginError");
-
-      const found = USERS.find(x => x.user === u && x.pass === p);
-
-      if (found) {
+      if (USERS.find(x => x.user === u && x.pass === p)) {
         sessionStorage.setItem("ip_inventory_logged_in", "1");
-        err.classList.add("hidden");
         await showCompanyPage(true);
-        showToast("เข้าสู่ระบบเรียบร้อย ✅");
+        showToast("Login Success ✅");
       } else {
-        err.classList.remove("hidden");
-        showToast("Username หรือ Password ไม่ถูกต้อง ❌", "error");
+        document.getElementById("loginError").classList.remove("hidden");
       }
     }
 
     function logout() {
       sessionStorage.removeItem("ip_inventory_logged_in");
-      selectedCompanyId = null;
-      document.getElementById("loginUser").value = "";
-      document.getElementById("loginPass").value = "";
-      replaceAppState("login");
-      showLoginPage(false);
+      showLoginPage(true);
     }
 
-    function isLoggedIn() {
-      return sessionStorage.getItem("ip_inventory_logged_in") === "1";
-    }
-
-    function hideAllPages() {
-      document.getElementById("loginPage").classList.add("hidden");
-      document.getElementById("companyPage").classList.add("hidden");
-      document.getElementById("addCompanyPage").classList.add("hidden");
-      document.getElementById("devicePage").classList.add("hidden");
-      document.getElementById("addDevicePage").classList.add("hidden");
-    }
+    function isLoggedIn() { return sessionStorage.getItem("ip_inventory_logged_in") === "1"; }
 
     function showLoginPage(push = true) {
       hideAllPages();
       document.getElementById("loginPage").classList.remove("hidden");
-
-      if (push) {
-        pushAppState("login");
-      }
+      if (push) pushAppState("login");
     }
 
     async function showCompanyPage(push = true) {
       hideAllPages();
       document.getElementById("companyPage").classList.remove("hidden");
-      selectedCompanyId = null;
       await loadData();
       renderCompanies();
-
-      if (push) {
-        pushAppState("company");
-      }
+      if (push) pushAppState("company");
     }
 
-    function showAddCompanyPage(push = true) {
+    function showAddCompanyPage() {
       hideAllPages();
       document.getElementById("addCompanyPage").classList.remove("hidden");
       document.getElementById("companyNameInput").value = "";
-      document.getElementById("companyNameInput").focus();
-
-      if (push) {
-        pushAppState("addCompany");
-      }
     }
 
     async function confirmAddCompany() {
-      const input = document.getElementById("companyNameInput");
-      const name = input.value.trim();
-
-      if (!name) {
-        showToast("กรุณากรอกชื่อบริษัท ❌", "error");
-        return;
-      }
-
-      const exists = companies.find(c => c.name.toLowerCase() === name.toLowerCase());
-      if (exists) {
-        showToast("มีบริษัทนี้อยู่แล้ว ❌", "error");
-        return;
-      }
-
-      const { error } = await db
-        .from("companies")
-        .insert([{ name: name }]);
-
-      if (error) {
-        console.error(error);
-        showToast("เพิ่มบริษัทไม่สำเร็จ ❌", "error");
-        return;
-      }
-
-      await showCompanyPage(true);
-      showToast("เพิ่มบริษัทเรียบร้อย ✅");
+      const name = document.getElementById("companyNameInput").value.trim();
+      if (!name) return showToast("กรุณาระบุชื่อบริษัท", "error");
+      const { error } = await db.from("companies").insert([{ name }]);
+      if (error) return showToast("Error adding company", "error");
+      showCompanyPage(true);
     }
 
-    async function deleteCompany(companyId) {
-      if (!confirm("ลบบริษัทนี้ใช่ไหม?")) return;
+    async function showDevicePage(id, push = true) {
+      selectedCompanyId = id;
+      await loadData();
+      const company = companies.find(c => c.id === id);
+      if (!company) return;
 
-      const { error } = await db
-        .from("companies")
-        .delete()
-        .eq("id", companyId);
+      hideAllPages();
+      document.getElementById("devicePage").classList.remove("hidden");
+      document.getElementById("devicePageTitle").innerText = "Devices - " + company.name;
+      renderDevices();
+      if (push) pushAppState("device", id);
+    }
 
-      if (error) {
-        console.error(error);
-        showToast("ลบบริษัทไม่สำเร็จ ❌", "error");
-        return;
-      }
+    async function backToCompanies() { await showCompanyPage(true); }
 
-      await showCompanyPage(false);
-      showToast("ลบบริษัทเรียบร้อย ✅");
+    // --- Device Management ---
+    async function addDevice() {
+      const name = document.getElementById("deviceNameInput").value.trim();
+      const ip = document.getElementById("deviceIpInput").value.trim();
+      const user = document.getElementById("deviceUserInput").value.trim();
+      const pass = document.getElementById("devicePassInput").value.trim();
+      
+      if (!name) return document.getElementById("deviceError").classList.remove("hidden");
+
+      const { error } = await db.from("devices").insert([{
+        company_id: selectedCompanyId, name, ip, username: user, password: pass
+      }]);
+
+      if (error) return showToast("Error adding device", "error");
+      
+      closeAddDeviceModal();
+      await loadData();
+      renderDevices();
+      showToast("เพิ่มอุปกรณ์เรียบร้อย ✅");
+    }
+
+    function clearDeviceInputs() {
+      ["deviceNameInput", "deviceIpInput", "deviceUserInput", "devicePassInput"].forEach(id => {
+        document.getElementById(id).value = "";
+      });
     }
 
     function renderCompanies() {
       const wrap = document.getElementById("companyList");
       const query = document.getElementById("searchInput").value.toLowerCase();
+      const filtered = companies.filter(c => c.name.toLowerCase().includes(query));
 
-      const filteredCompanies = companies.filter(company =>
-        company.name.toLowerCase().includes(query)
+      document.getElementById("noResults").classList.toggle("hidden", filtered.length > 0);
+      wrap.innerHTML = filtered.map(c => `
+        <div class="company-item">
+          <div><div class="company-name">${escapeHtml(c.name)}</div><div class="muted">Devices: ${c.devices.length}</div></div>
+          <div>
+            <button class="btn-warning" onclick="showDevicePage('${c.id}')">Open</button>
+            <button class="btn-danger" onclick="deleteCompany('${c.id}')">Delete</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderDevices() {
+      const wrap = document.getElementById("deviceTableWrap");
+      const company = companies.find(c => c.id === selectedCompanyId);
+      if (!company) return;
+
+      const query = document.getElementById("deviceSearchInput").value.toLowerCase();
+      const filtered = company.devices.filter(d => 
+        [d.name, d.ip, d.user].some(v => v.toLowerCase().includes(query))
       );
 
-      if (filteredCompanies.length === 0) {
-        document.getElementById("noResults").classList.remove("hidden");
-        wrap.innerHTML = "";
+      document.getElementById("deviceCount").innerText = `Devices: ${filtered.length} / ${company.devices.length}`;
+
+      if (filtered.length === 0) {
+        wrap.innerHTML = '<div class="empty">ไม่พบข้อมูลอุปกรณ์</div>';
         return;
       }
 
-      document.getElementById("noResults").classList.add("hidden");
+      wrap.innerHTML = `
+        <div class="table-wrap">
+          <table class="device-table">
+            <thead>
+              <tr>
+                <th>Device</th><th>IP / URL</th><th>Username</th><th>Password</th><th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filtered.map(d => `
+                <tr id="row-${d.id}">
+                  <td style="font-weight:bold">${escapeHtml(d.name)}</td>
+                  <td class="ip-cell">${escapeHtml(d.ip)}</td>
+                  <td>${escapeHtml(d.user)}</td>
+                  <td class="pass-cell">${escapeHtml(d.pass)}</td>
+                  <td>
+                    <button class="btn-warning" onclick="editDeviceInline('${d.id}')">Edit</button>
+                    <button class="btn-danger" onclick="deleteDevice('${d.id}')">Delete</button>
+                  </td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
 
-      wrap.innerHTML = filteredCompanies.map(company => `
-        <div class="company-item">
-          <div>
-            <div class="company-name">${escapeHtml(company.name)}</div>
-            <div class="muted">Devices: ${company.devices.length}</div>
-          </div>
-          <div>
-            <button class="btn-warning" onclick="showDevice
+    async function deleteDevice(id) {
+      if (!confirm("ลบอุปกรณ์นี้?")) return;
+      await db.from("devices").delete().eq("id", id);
+      await loadData();
+      renderDevices();
+    }
+
+    function editDeviceInline(id) {
+      const d = companies.find(c => c.id === selectedCompanyId).devices.find(x => x.id === id);
+      const row = document.getElementById("row-" + id);
+      row.innerHTML = `
+        <td><input class="table-input" type="text" id="editN-${id}" value="${escapeAttr(d.name)}" /></td>
+        <td><input class="table-input" type="text" id="editI-${id}" value="${escapeAttr(d.ip)}" /></td>
+        <td><input class="table-input" type="text" id="editU-${id}" value="${escapeAttr(d.user)}" /></td>
+        <td><input class="table-input" type="text" id="editP-${id}" value="${escapeAttr(d.pass)}" /></td>
+        <td>
+          <button class="btn-success" onclick="saveEdit('${id}')">Save</button>
+          <button class="btn-light" onclick="renderDevices()">Cancel</button>
+        </td>
+      `;
+    }
+
+    async function saveEdit(id) {
+      const updates = {
+        name: document.getElementById("editN-"+id).value,
+        ip: document.getElementById("editI-"+id).value,
+        username: document.getElementById("editU-"+id).value,
+        password: document.getElementById("editP-"+id).value
+      };
+      await db.from("devices").update(updates).eq("id", id);
+      await loadData();
+      renderDevices();
+    }
+
+    async function deleteCompany(id) {
+        if (!confirm("ลบบริษัทและอุปกรณ์ทั้งหมด?")) return;
+        await db.from("companies").delete().eq("id", id);
+        showCompanyPage(false);
+    }
+
+    // --- Excel Import (Minimal Fix) ---
+    async function importExcel(e) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const data = new Uint8Array(event.target.result);
+        const wb = XLSX.read(data, { type: "array" });
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+        
+        for (const row of rows) {
+          const compName = row.Company || row.Customer || "Unknown";
+          let comp = companies.find(c => c.name === compName);
+          if (!comp) {
+            const { data: newC } = await db.from("companies").insert([{ name: compName }]).select().single();
+            comp = { id: newC.id, devices: [] };
+          }
+          await db.from("devices").insert([{
+            company_id: comp.id, name: row.Device || "New Device", ip: row.IP || "", username: row.Username || "", password: row.Password || ""
+          }]);
+        }
+        showCompanyPage(false);
+        showToast("Import Success ✅");
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function escapeHtml(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+    function escapeAttr(s) { return s.replace(/"/g, "&quot;"); }
+
+    // Init
+    isLoggedIn() ? showCompanyPage(false) : showLoginPage(false);
+  </script>
+</body>
+</html>
