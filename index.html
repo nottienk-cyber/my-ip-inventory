@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IP Customer Inventory - Professional Edition</title>
+  <title>IP Customer Inventory - Professional Management</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -22,36 +22,80 @@
     body { background-color: var(--bg); color: var(--text); margin: 0; min-height: 100vh; }
     .hidden { display: none !important; }
     
-    .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+    .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
     .card { background: var(--card); border-radius: 16px; padding: 30px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid var(--border); }
 
-    /* Login Page Styling */
+    /* --- LOGIN PAGE --- */
     .login-container { max-width: 400px; margin: 100px auto; text-align: center; }
-    
-    /* Input & Button */
     input { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; font-size: 15px; margin-bottom: 15px; outline: none; transition: 0.2s; }
     input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
 
+    /* --- BUTTONS --- */
     button { padding: 10px 20px; border-radius: 10px; cursor: pointer; border: none; font-weight: 500; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
     .btn-primary { background: var(--primary); color: white; }
     .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
     .btn-light { background: #f1f5f9; color: #475569; }
-    .btn-danger { background: #fee2e2; color: #dc2626; }
-    .btn-warning { background: #fef3c7; color: #d97706; }
+    .btn-danger { background: #fee2e2; color: #dc2626; padding: 6px 12px; font-size: 12px; }
+    .btn-warning { background: #fef3c7; color: #d97706; padding: 6px 12px; font-size: 12px; }
 
-    /* Company Grid */
+    /* --- COMPANY GRID --- */
     .company-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 20px; }
     .company-item { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
     .company-item:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 
-    /* Modern Table */
-    .table-wrap { margin-top: 24px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-    table { width: 100%; border-collapse: collapse; background: white; }
-    th { background: #f8fafc; padding: 16px; font-size: 12px; color: var(--muted); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border); }
-    td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
-    .code-badge { font-family: monospace; background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-size: 13px; color: #334155; }
+    /* --- MODERN TABLE (แก้ไขปัญหาล้นขอบ) --- */
+    .table-wrap { 
+      margin-top: 24px; 
+      border: 1px solid var(--border); 
+      border-radius: 12px; 
+      overflow: hidden; 
+      background: white;
+    }
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      table-layout: fixed; /* ล็อกความกว้างคอลัมน์ไม่ให้ยืดตามตัวหนังสือ */
+    }
+    th { 
+      background: #f8fafc; 
+      padding: 16px; 
+      font-size: 12px; 
+      color: var(--muted); 
+      text-transform: uppercase; 
+      text-align: left; 
+      border-bottom: 2px solid var(--border); 
+    }
+    td { 
+      padding: 16px; 
+      border-bottom: 1px solid var(--border); 
+      font-size: 14px; 
+      vertical-align: middle;
+      white-space: nowrap; /* ป้องกันการขึ้นบรรทัดใหม่จนตารางพัง */
+      overflow: hidden; 
+      text-overflow: ellipsis; /* แสดง ... เมื่อข้อมูลยาวเกิน */
+    }
 
-    /* Modal */
+    /* กำหนดสัดส่วนคอลัมน์ (%) ให้คงที่ */
+    .col-device { width: 30%; }
+    .col-ip     { width: 25%; }
+    .col-user   { width: 15%; }
+    .col-pass   { width: 15%; }
+    .col-action { width: 15%; text-align: center; }
+
+    .code-badge { 
+      font-family: monospace; 
+      background: #f1f5f9; 
+      padding: 4px 8px; 
+      border-radius: 6px; 
+      font-size: 13px; 
+      color: #334155; 
+      display: inline-block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* --- MODAL --- */
     .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .modal-content { background: white; padding: 30px; border-radius: 20px; width: 450px; max-width: 90%; }
 
@@ -65,15 +109,15 @@
 
 <div id="addDeviceModal" class="modal-overlay hidden">
   <div class="modal-content">
-    <h3 style="margin-top:0">เพิ่มอุปกรณ์ใหม่</h3>
+    <h3 style="margin-top:0" id="modalTitle">เพิ่มอุปกรณ์ใหม่</h3>
     <p style="color:var(--muted); font-size:14px; margin-bottom:20px" id="modalSubtitle">ระบุรายละเอียดอุปกรณ์</p>
-    <input type="text" id="inName" placeholder="Device Name (เช่น Core Switch)">
+    <input type="text" id="inName" placeholder="Device Name">
     <input type="text" id="inIp" placeholder="IP Address / URL">
     <input type="text" id="inUser" placeholder="Username">
     <input type="text" id="inPass" placeholder="Password">
     <div style="display: flex; gap: 10px; margin-top: 10px;">
       <button class="btn-light" style="flex: 1" onclick="closeModal()">ยกเลิก</button>
-      <button class="btn-primary" style="flex: 1; justify-content: center;" onclick="saveDevice()">บันทึก</button>
+      <button class="btn-primary" style="flex: 1; justify-content: center;" onclick="saveDevice()">บันทึกข้อมูล</button>
     </div>
   </div>
 </div>
@@ -82,7 +126,7 @@
 
   <div id="loginPage" class="login-container card">
     <h2 style="margin-bottom: 10px;">IP Customer Login</h2>
-    <p style="color:var(--muted); margin-bottom: 25px;">กรุณาลงชื่อเข้าใช้งานระบบ</p>
+    <p style="color:var(--muted); margin-bottom: 25px;">Inventory Management System</p>
     <input type="text" id="loginUser" placeholder="Username">
     <input type="password" id="loginPass" placeholder="Password">
     <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="login()">Login</button>
@@ -93,7 +137,7 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
         <div>
           <h2 style="margin:0">Company List</h2>
-          <p style="color:var(--muted); margin:4px 0 0 0;">เลือกบริษัทเพื่อจัดการอุปกรณ์</p>
+          <p style="color:var(--muted); margin:4px 0 0 0;">เลือกบริษัทเพื่อจัดการข้อมูล</p>
         </div>
         <button class="btn-light" onclick="logout()">Logout</button>
       </div>
@@ -112,7 +156,7 @@
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px;">
         <div>
           <h2 id="deviceTitle">Devices</h2>
-          <p id="deviceSubtitle" style="color:var(--muted); margin:4px 0 0 0;">Inventory</p>
+          <p id="deviceSubtitle" style="color:var(--muted); margin:4px 0 0 0;"></p>
         </div>
         <div style="display: flex; gap: 8px;">
           <button class="btn-light" onclick="showPage('companyPage')">Back</button>
@@ -122,18 +166,18 @@
 
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
         <button class="btn-primary" onclick="openModal()">+ Add Device</button>
-        <input type="text" id="searchDev" style="max-width: 350px; margin:0;" placeholder="ค้นหาชื่อเครื่อง, IP..." onkeyup="renderDevices()">
+        <input type="text" id="searchDev" style="max-width: 350px; margin:0;" placeholder="ค้นหาชื่อ, IP, User..." onkeyup="renderDevices()">
       </div>
 
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Device Name</th>
-              <th>IP / URL</th>
-              <th>Username</th>
-              <th>Password</th>
-              <th style="text-align: center;">Actions</th>
+              <th class="col-device">Device Name</th>
+              <th class="col-ip">IP / URL</th>
+              <th class="col-user">Username</th>
+              <th class="col-pass">Password</th>
+              <th class="col-action">Action</th>
             </tr>
           </thead>
           <tbody id="deviceTableBody"></tbody>
@@ -153,19 +197,18 @@
   let allCompanies = [];
   let allDevices = [];
   let selectedCompany = null;
+  let editingDeviceId = null;
 
-  // --- AUTH & NAVIGATION ---
+  // --- NAVIGATION & AUTH ---
   function showPage(pageId) {
     document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
     document.getElementById(pageId).classList.remove('hidden');
     if (pageId === 'companyPage') loadCompanies();
   }
 
-  async function login() {
+  function login() {
     const u = document.getElementById("loginUser").value.trim();
     const p = document.getElementById("loginPass").value.trim();
-    
-    // User สำคัญที่ใช้ล็อกอิน
     const USERS = [
       { user: "admin", pass: "12345678" },
       { user: "ccadmin", pass: "CC$upp0rt#1" }
@@ -174,9 +217,8 @@
     if (USERS.find(x => x.user === u && x.pass === p)) {
       sessionStorage.setItem("isLoggedIn", "true");
       showPage('companyPage');
-      toast("เข้าสู่ระบบสำเร็จ ✅");
     } else {
-      alert("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+      alert("Invalid credentials");
     }
   }
 
@@ -198,32 +240,30 @@
     const grid = document.getElementById("companyGrid");
     const term = document.getElementById("searchComp").value.toLowerCase();
     const filtered = allCompanies.filter(c => c.name.toLowerCase().includes(term));
-
     grid.innerHTML = filtered.map(c => `
       <div class="company-item" onclick="goToDevices('${c.id}', '${c.name}')">
         <div>
           <div style="font-weight:600; font-size:16px; color:var(--primary);">${c.name}</div>
-          <div style="font-size:12px; color:var(--muted);">คลิกเพื่อดูอุปกรณ์</div>
+          <div style="font-size:12px; color:var(--muted);">Inventory Details</div>
         </div>
-        <span style="color:var(--border); font-size:20px;">→</span>
+        <span style="color:#cbd5e1; font-size:20px;">→</span>
       </div>
     `).join("");
   }
 
   async function addCompany() {
-    const name = prompt("ระบุชื่อบริษัทใหม่:");
+    const name = prompt("Enter Company Name:");
     if (name) {
-      const { error } = await db.from('companies').insert([{ name }]);
-      if (!error) { toast("เพิ่มบริษัทสำเร็จ"); loadCompanies(); }
+      await db.from('companies').insert([{ name }]);
+      loadCompanies();
     }
   }
 
-  // --- DEVICE LOGIC ---
+  // --- DEVICE LOGIC (พร้อมระบบตัดข้อความล้น) ---
   async function goToDevices(id, name) {
     selectedCompany = { id, name };
     document.getElementById("deviceTitle").innerText = name;
-    document.getElementById("deviceSubtitle").innerText = "รายการอุปกรณ์ของ " + name;
-    document.getElementById("modalSubtitle").innerText = "เพิ่มอุปกรณ์ให้ " + name;
+    document.getElementById("deviceSubtitle").innerText = "รายการอุปกรณ์ทั้งหมดของ " + name;
     showPage('devicePage');
     loadDevices();
   }
@@ -240,63 +280,85 @@
     const tbody = document.getElementById("deviceTableBody");
     const term = document.getElementById("searchDev").value.toLowerCase();
     const filtered = allDevices.filter(d => 
-      (d.name || "").toLowerCase().includes(term) || (d.ip || "").toLowerCase().includes(term)
+      (d.name || "").toLowerCase().includes(term) || (d.ip || "").toLowerCase().includes(term) || (d.username || "").toLowerCase().includes(term)
     );
 
-    if(filtered.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--muted)">ไม่พบข้อมูลอุปกรณ์</td></tr>`;
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--muted)">No data found</td></tr>`;
       return;
     }
 
     tbody.innerHTML = filtered.map(d => `
       <tr>
-        <td><div style="font-weight:600; color:#0f172a">${d.name || '-'}</div></td>
-        <td><span class="code-badge">${d.ip || '-'}</span></td>
-        <td style="color:var(--muted)">${d.username || '-'}</td>
-        <td><span class="code-badge">${d.password || '-'}</span></td>
-        <td style="text-align: center;">
-          <button class="btn-warning" style="padding:6px 12px; font-size:12px;" onclick="editDevice('${d.id}')">Edit</button>
-          <button class="btn-danger" style="padding:6px 12px; font-size:12px;" onclick="deleteDevice('${d.id}')">Del</button>
+        <td title="${d.name}"><strong>${d.name || '-'}</strong></td>
+        <td><span class="code-badge" title="${d.ip}">${d.ip || '-'}</span></td>
+        <td title="${d.username}">${d.username || '-'}</td>
+        <td><span class="code-badge" title="${d.password}">${d.password || '-'}</span></td>
+        <td class="col-action">
+          <div style="display:flex; justify-content:center; gap:4px;">
+            <button class="btn-warning" onclick="editDevice('${d.id}')">Edit</button>
+            <button class="btn-danger" onclick="deleteDevice('${d.id}')">Del</button>
+          </div>
         </td>
       </tr>
     `).join("");
   }
 
-  // --- MODAL & DATA SAVE ---
-  function openModal() { document.getElementById("addDeviceModal").classList.remove("hidden"); }
+  // --- DATA MANAGEMENT ---
+  function openModal(id = null) {
+    editingDeviceId = id;
+    const modal = document.getElementById("addDeviceModal");
+    if(id) {
+      const d = allDevices.find(x => x.id === id);
+      document.getElementById("inName").value = d.name;
+      document.getElementById("inIp").value = d.ip;
+      document.getElementById("inUser").value = d.username;
+      document.getElementById("inPass").value = d.password;
+      document.getElementById("modalTitle").innerText = "แก้ไขข้อมูลอุปกรณ์";
+    } else {
+      ["inName", "inIp", "inUser", "inPass"].forEach(i => document.getElementById(i).value = "");
+      document.getElementById("modalTitle").innerText = "เพิ่มอุปกรณ์ใหม่";
+    }
+    modal.classList.remove("hidden");
+  }
+
   function closeModal() { document.getElementById("addDeviceModal").classList.add("hidden"); }
 
   async function saveDevice() {
     const name = document.getElementById("inName").value;
-    if(!name) { alert("กรุณาระบุชื่อเครื่อง"); return; }
+    if(!name) return alert("Please enter device name");
 
     const payload = {
-      name: name,
+      name,
       ip: document.getElementById("inIp").value,
       username: document.getElementById("inUser").value,
       password: document.getElementById("inPass").value,
       company_id: selectedCompany.id
     };
 
-    const { error } = await db.from('devices').insert([payload]);
-    if (!error) {
-      toast("บันทึกข้อมูลสำเร็จ ✅");
+    let res;
+    if (editingDeviceId) {
+      res = await db.from('devices').update(payload).eq('id', editingDeviceId);
+    } else {
+      res = await db.from('devices').insert([payload]);
+    }
+
+    if (!res.error) {
+      toast("Success ✅");
       closeModal();
       loadDevices();
-      // ล้างข้อมูลในช่องกรอก
-      ["inName", "inIp", "inUser", "inPass"].forEach(id => document.getElementById(id).value = "");
-    } else {
-      alert("Error: " + error.message);
     }
   }
 
   async function deleteDevice(id) {
-    if (confirm("ยืนยันการลบข้อมูลนี้หรือไม่?")) {
+    if (confirm("Delete this device?")) {
       await db.from('devices').delete().eq('id', id);
       loadDevices();
-      toast("ลบข้อมูลเรียบร้อย");
+      toast("Deleted");
     }
   }
+
+  function editDevice(id) { openModal(id); }
 
   function toast(msg) {
     const t = document.getElementById("toast");
@@ -305,13 +367,8 @@
     setTimeout(() => t.classList.remove("show"), 3000);
   }
 
-  // Session Check on Load
   window.onload = () => {
-    if (sessionStorage.getItem("isLoggedIn") === "true") {
-      showPage('companyPage');
-    } else {
-      showPage('loginPage');
-    }
+    if (sessionStorage.getItem("isLoggedIn")) showPage('companyPage');
   };
 </script>
 
