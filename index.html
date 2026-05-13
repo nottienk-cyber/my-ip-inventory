@@ -22,7 +22,6 @@
     body { background-color: var(--bg); color: var(--text); margin: 0; min-height: 100vh; position: relative; }
     .hidden { display: none !important; }
     
-    /* --- LOGO STYLING --- */
     .top-logo {
       position: absolute;
       top: 20px;
@@ -30,7 +29,7 @@
       z-index: 500;
     }
     .top-logo img {
-      height: 60px; /* ปรับขนาดความสูงตามความเหมาะสม */
+      height: 60px;
       width: auto;
       object-fit: contain;
     }
@@ -38,11 +37,9 @@
     .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
     .card { background: var(--card); border-radius: 16px; padding: 30px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid var(--border); position: relative; }
 
-    /* --- LOGIN UI --- */
     .login-box { position: relative; width: 100%; }
     .toggle-password { position: absolute; right: 12px; top: 12px; cursor: pointer; color: var(--muted); background: none; border: none; padding: 0; font-size: 18px; }
 
-    /* --- TABLE UI (Copy Friendly) --- */
     .table-wrap { margin-top: 15px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: white; }
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     th { background: #f8fafc; padding: 16px; font-size: 12px; color: var(--muted); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border); }
@@ -59,12 +56,10 @@
     .btn-copy { cursor: pointer; background: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; font-size: 12px; color: var(--muted); transition: 0.2s; }
     .btn-copy:hover { background: var(--primary); color: white; border-color: var(--primary); }
 
-    /* --- PAGINATION --- */
     .pagination-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
     .page-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: white; cursor: pointer; }
     .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* --- COMMON UI --- */
     button { padding: 10px 18px; border-radius: 10px; cursor: pointer; border: none; font-weight: 500; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; }
     .btn-primary { background: var(--primary); color: white; }
     .btn-light { background: #f1f5f9; color: #475569; }
@@ -82,7 +77,6 @@
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .modal-content { background: white; padding: 30px; border-radius: 20px; width: 450px; max-width: 95%; }
 
-    /* Responsive adjustments for Logo */
     @media (max-width: 768px) {
       .top-logo img { height: 40px; }
       .container { margin-top: 80px; }
@@ -98,7 +92,6 @@
 <div id="toast">แจ้งเตือน</div>
 
 <div class="container">
-  
   <div id="loginPage" class="card" style="max-width: 400px; margin: 100px auto; text-align: center;">
     <h2 style="margin-bottom: 10px;">Inventory Login</h2>
     <p style="color: var(--muted); margin-bottom: 25px;">CC (Thailand) Co.,Ltd.</p>
@@ -127,7 +120,7 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
         <h2 id="deviceTitle" style="margin:0">Devices</h2>
         <div style="display: flex; gap: 8px;">
-          <button class="btn-light" onclick="showPage('companyPage')">Back</button>
+          <button class="btn-light" onclick="history.back()">Back</button>
           <button class="btn-primary" onclick="openModal()">+ Add Device</button>
         </div>
       </div>
@@ -186,9 +179,6 @@
 </div>
 
 <script>
-  // **สำคัญ**: คุณต้องอัปโหลดรูป Logo ไปไว้ใน Supabase Storage หรือ Link ที่เข้าถึงได้ 
-  // แล้วเอา URL มาใส่ใน <img src="..."> ด้านบนครับ
-  
   const SUPABASE_URL = "https://axluexlgltkrmnytswwq.supabase.co";
   const SUPABASE_KEY = "sb_publishable_qgjQeHyWCoBQ2ruSu5vfAg_MagAFIul";
   const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -196,6 +186,34 @@
   let allCompanies = [], allDevices = [], selectedCompany = null, editingDeviceId = null;
   let currentPage = 1, rowsPerPage = 10;
 
+  // --- HISTORY & NAVIGATION LOGIC ---
+  function showPage(pageId, pushState = true) {
+    document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
+    document.getElementById(pageId).classList.remove('hidden');
+    
+    if (pageId === 'companyPage') loadCompanies();
+    
+    // บันทึกสถานะหน้าลงใน Browser History
+    if (pushState) {
+      history.pushState({ pageId: pageId, company: selectedCompany }, "", "");
+    }
+  }
+
+  // ดักจับการกดปุ่ม Back
+  window.onpopstate = function(event) {
+    if (event.state && event.state.pageId) {
+      if (event.state.pageId === 'devicePage' && event.state.company) {
+        selectedCompany = event.state.company;
+        document.getElementById("deviceTitle").innerText = selectedCompany.name;
+        loadDevices();
+      }
+      showPage(event.state.pageId, false);
+    } else {
+      showPage('loginPage', false);
+    }
+  };
+
+  // --- CORE FUNCTIONS ---
   function toggleLoginPass() {
     const p = document.getElementById("loginPass");
     const b = document.querySelector(".toggle-password");
@@ -214,12 +232,6 @@
 
   function logout() { sessionStorage.clear(); window.location.reload(); }
 
-  function showPage(pageId) {
-    document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
-    document.getElementById(pageId).classList.remove('hidden');
-    if (pageId === 'companyPage') loadCompanies();
-  }
-
   async function loadCompanies() {
     const { data } = await db.from('companies').select('*').order('name');
     allCompanies = data || [];
@@ -233,19 +245,15 @@
   async function goToDevices(id, name) {
     selectedCompany = { id, name };
     document.getElementById("deviceTitle").innerText = name;
-    currentPage = 1; loadDevices(); showPage('devicePage');
+    currentPage = 1; 
+    await loadDevices(); 
+    showPage('devicePage');
   }
 
   async function loadDevices() {
     const { data } = await db.from('devices').select('*').eq('company_id', selectedCompany.id).order('created_at', {ascending: false});
     allDevices = data || [];
     renderDevices();
-  }
-
-  async function copyToClipboard(text) {
-    if(!text || text === '-') return;
-    await navigator.clipboard.writeText(text);
-    showToast("คัดลอกแล้ว! ✅");
   }
 
   function renderDevices() {
@@ -293,6 +301,22 @@
     document.getElementById("pageInfo").innerText = `Showing ${total === 0 ? 0 : start+1} to ${dEnd} of ${total}`;
   }
 
+  async function copyToClipboard(text) {
+    if(!text || text === '-') return;
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast("คัดลอกแล้ว! ✅");
+    } catch(err) {
+      const el = document.createElement('textarea');
+      el.value = text;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      showToast("คัดลอกแล้ว! ✅");
+    }
+  }
+
   function changePage(dir) { currentPage += dir; renderDevices(); }
   function changeRowsPerPage() { rowsPerPage = document.getElementById("rowsPerPage").value; currentPage = 1; renderDevices(); }
 
@@ -335,7 +359,11 @@
     setTimeout(() => t.classList.remove("show"), 3000);
   }
 
-  window.onload = () => { if(sessionStorage.getItem("isLoggedIn")) showPage('companyPage'); };
+  window.onload = () => { 
+    if(sessionStorage.getItem("isLoggedIn")) {
+      showPage('companyPage', true); 
+    } 
+  };
 </script>
 </body>
 </html>
